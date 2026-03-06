@@ -13,8 +13,11 @@
 - Prefer named exports over default exports.
 - Use `async`/`await` over `.then()` chains.
 - Colocate related files (component, types, utils) in the same directory when possible.
+- **Do NOT create `index.ts` barrel files** for re-exporting. Import directly from the source file.
+- Prefer `interface` over `type` for manually written types. Use `type` only when required (e.g., `z.infer<>`, union types, mapped types).
 
 ## Domain-Specific Instructions
 
 - **Frontend:** See [copilot-instructions-frontend.md](./copilot-instructions-frontend.md)
 - **Backend:** See [copilot-instructions-backend.md](./copilot-instructions-backend.md)
+- **Architecture:** See [copilot-instructions-architecture.md](./copilot-instructions-architecture.md)
