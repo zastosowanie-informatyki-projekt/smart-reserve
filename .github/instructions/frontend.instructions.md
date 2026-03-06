@@ -1,3 +1,9 @@
+---
+name: "Frontend"
+description: "React component patterns, routing structure, UI components, and styling conventions for Next.js App Router"
+applyTo: "app/**,src/app/**,components/**,src/components/**,hooks/**,src/hooks/**"
+---
+
 # Frontend Instructions
 
 ## Route-Based Folder Structure

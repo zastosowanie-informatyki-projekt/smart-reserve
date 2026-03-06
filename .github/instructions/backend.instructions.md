@@ -1,8 +1,10 @@
-# Backend Instructions
-
-> For domain structure, layer responsibilities, and data flow see [copilot-instructions-architecture.md](./copilot-instructions-architecture.md).
-
 ---
+name: "Backend"
+description: "Server Actions, services, repositories, Zod validation, Prisma patterns, and error handling conventions"
+applyTo: "server/**,src/server/**,lib/**,src/lib/**"
+---
+
+# Backend Instructions
 
 ## Action Result Type
 

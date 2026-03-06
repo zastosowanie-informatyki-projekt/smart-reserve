@@ -1,3 +1,9 @@
+---
+name: "Architecture"
+description: "Domain-based project structure, layer responsibilities, data flow, and import rules for Next.js App Router with Server Actions and Prisma"
+applyTo: "**"
+---
+
 # Architecture Instructions
 
 This project uses **Next.js App Router** with **Server Actions** and **Prisma**.

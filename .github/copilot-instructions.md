@@ -18,6 +18,8 @@
 
 ## Domain-Specific Instructions
 
-- **Frontend:** See [copilot-instructions-frontend.md](./copilot-instructions-frontend.md)
-- **Backend:** See [copilot-instructions-backend.md](./copilot-instructions-backend.md)
-- **Architecture:** See [copilot-instructions-architecture.md](./copilot-instructions-architecture.md)
+Domain-specific rules are defined in `.github/instructions/` as `.instructions.md` files and are applied automatically based on file patterns:
+
+- **Frontend** (`app/`, `components/`, `hooks/`): `frontend.instructions.md`
+- **Backend** (`server/`, `lib/`): `backend.instructions.md`
+- **Architecture** (all files): `architecture.instructions.md`
