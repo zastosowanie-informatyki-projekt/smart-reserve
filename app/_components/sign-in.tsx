@@ -1,19 +1,19 @@
-import { signIn } from "@/auth";
+"use client";
+
+import { authClient } from "@/lib/auth-client";
 
 export const SignIn = () => {
+  const handleSignIn = async () => {
+    await authClient.signIn.social({ provider: "google" });
+  };
+
   return (
-    <form
-      action={async () => {
-        "use server";
-        await signIn("google");
-      }}
+    <button
+      type="button"
+      onClick={handleSignIn}
+      className="w-full rounded-md bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
     >
-      <button
-        type="submit"
-        className="w-full rounded-md bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
-      >
-        Sign in with Google
-      </button>
-    </form>
+      Sign in with Google
+    </button>
   );
 };
