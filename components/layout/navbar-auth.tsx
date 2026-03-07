@@ -10,14 +10,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, LayoutDashboard, CalendarDays } from "lucide-react";
+import { User, LogOut, LayoutDashboard, CalendarDays, Settings } from "lucide-react";
 
 export const NavbarAuth = ({
   session,
+  hasRestaurants,
 }: {
   session: {
-    user: { name: string; email: string; image?: string | null; role?: string };
+    user: { name: string; email: string; image?: string | null };
   } | null;
+  hasRestaurants: boolean;
 }) => {
   const handleSignIn = async () => {
     await authClient.signIn.social({ provider: "google" });
@@ -36,8 +38,6 @@ export const NavbarAuth = ({
     );
   }
 
-  const isOwner = session.user.role === "RESTAURANT_OWNER";
-
   return (
     <div className="flex items-center gap-3">
       <Link href="/reservations">
@@ -46,11 +46,11 @@ export const NavbarAuth = ({
           My Reservations
         </Button>
       </Link>
-      {isOwner && (
+      {hasRestaurants && (
         <Link href="/dashboard">
           <Button variant="ghost" size="sm" className="hidden md:flex">
             <LayoutDashboard className="mr-1.5 h-4 w-4" />
-            Dashboard
+            My Restaurants
           </Button>
         </Link>
       )}
@@ -78,16 +78,21 @@ export const NavbarAuth = ({
             </p>
           </div>
           <DropdownMenuSeparator />
+          <DropdownMenuItem render={<Link href="/profile" />}>
+            <Settings className="mr-2 h-4 w-4" />
+            Profile
+          </DropdownMenuItem>
           <DropdownMenuItem className="md:hidden" render={<Link href="/reservations" />}>
             <CalendarDays className="mr-2 h-4 w-4" />
             My Reservations
           </DropdownMenuItem>
-          {isOwner && (
+          {hasRestaurants && (
             <DropdownMenuItem className="md:hidden" render={<Link href="/dashboard" />}>
               <LayoutDashboard className="mr-2 h-4 w-4" />
-              Dashboard
+              My Restaurants
             </DropdownMenuItem>
           )}
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>
             <LogOut className="mr-2 h-4 w-4" />
             Sign Out

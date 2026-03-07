@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { NavbarAuth } from "./navbar-auth";
 
@@ -7,6 +8,14 @@ export const Navbar = async () => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
+
+  let hasRestaurants = false;
+  if (session) {
+    const count = await prisma.restaurant.count({
+      where: { ownerId: session.user.id },
+    });
+    hasRestaurants = count > 0;
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -24,7 +33,7 @@ export const Navbar = async () => {
             </Link>
           </nav>
         </div>
-        <NavbarAuth session={session} />
+        <NavbarAuth session={session} hasRestaurants={hasRestaurants} />
       </div>
     </header>
   );
