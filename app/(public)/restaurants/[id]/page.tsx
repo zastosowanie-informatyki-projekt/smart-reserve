@@ -46,6 +46,7 @@ export default async function RestaurantDetailPage({
         <ReservationForm
           restaurantId={id}
           isAuthenticated={!!session}
+          openingHours={restaurant.openingHours}
         />
       </div>
     </div>

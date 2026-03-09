@@ -53,6 +53,10 @@ export const restaurantService = {
     return restaurantRepository.findMany(filters);
   },
 
+  async findOpeningHours(restaurantId: string) {
+    return restaurantRepository.findOpeningHours(restaurantId);
+  },
+
   async setOpeningHours(data: SetOpeningHoursInput) {
     const session = await authService.requireAuth();
     await authService.requireRestaurantOwner(

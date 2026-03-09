@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,26 +13,74 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { getAvailableTables } from "@/server/tables/actions/get-available-tables";
 import { createReservation } from "@/server/reservations/actions/create-reservation";
 import { TableList } from "./table-list";
-import { Search } from "lucide-react";
+import { Search, AlertCircle } from "lucide-react";
+
+type OpeningHoursEntry = {
+  dayOfWeek: number;
+  openTime: string;
+  closeTime: string;
+  isClosed: boolean;
+};
+
+function generateTimeSlots(open: string, close: string): string[] {
+  const slots: string[] = [];
+  const [openH, openM] = open.split(":").map(Number);
+  const [closeH, closeM] = close.split(":").map(Number);
+  const startMinutes = openH * 60 + openM;
+  const endMinutes = closeH * 60 + closeM;
+
+  for (let m = startMinutes; m <= endMinutes; m += 30) {
+    const h = Math.floor(m / 60);
+    const min = m % 60;
+    slots.push(`${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`);
+  }
+  return slots;
+}
+
+function getDayOfWeekFromDate(dateStr: string): number {
+  const date = new Date(dateStr + "T00:00:00");
+  const jsDay = date.getDay();
+  return jsDay === 0 ? 6 : jsDay - 1;
+}
+
+const DAY_NAMES = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
 
 export const ReservationForm = ({
   restaurantId,
   isAuthenticated,
+  openingHours,
 }: {
   restaurantId: string;
   isAuthenticated: boolean;
+  openingHours: OpeningHoursEntry[];
 }) => {
   const router = useRouter();
   const [isSearching, startSearchTransition] = useTransition();
   const [isBooking, startBookTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [date, setDate] = useState("");
+  const [startTimeSlot, setStartTimeSlot] = useState("");
+  const [endTimeSlot, setEndTimeSlot] = useState("");
   const [guestCount, setGuestCount] = useState("");
 
   const [availableTables, setAvailableTables] = useState<
@@ -46,11 +94,45 @@ export const ReservationForm = ({
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
+  const hasOpeningHours = openingHours.length > 0;
+
+  const selectedDayHours = useMemo(() => {
+    if (!date || !hasOpeningHours) return null;
+    const dow = getDayOfWeekFromDate(date);
+    return openingHours.find((h) => h.dayOfWeek === dow) ?? null;
+  }, [date, openingHours, hasOpeningHours]);
+
+  const isDayClosed = selectedDayHours?.isClosed === true;
+
+  const startTimeSlots = useMemo(() => {
+    if (!selectedDayHours || isDayClosed) return [];
+    return generateTimeSlots(selectedDayHours.openTime, selectedDayHours.closeTime);
+  }, [selectedDayHours, isDayClosed]);
+
+  const endTimeSlots = useMemo(() => {
+    if (!startTimeSlot || !selectedDayHours || isDayClosed) return [];
+    return generateTimeSlots(selectedDayHours.openTime, selectedDayHours.closeTime).filter(
+      (slot) => slot > startTimeSlot,
+    );
+  }, [startTimeSlot, selectedDayHours, isDayClosed]);
+
+  const resetSearch = () => {
+    setHasSearched(false);
+    setAvailableTables(null);
+    setSelectedTableId(null);
+  };
+
+  const toDatetimeLocal = (dateStr: string, timeStr: string) =>
+    `${dateStr}T${timeStr}`;
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSelectedTableId(null);
     setAvailableTables(null);
+
+    const startTime = toDatetimeLocal(date, startTimeSlot);
+    const endTime = toDatetimeLocal(date, endTimeSlot);
 
     startSearchTransition(async () => {
       const result = await getAvailableTables({
@@ -77,6 +159,9 @@ export const ReservationForm = ({
       setError("Please select a table");
       return;
     }
+
+    const startTime = toDatetimeLocal(date, startTimeSlot);
+    const endTime = toDatetimeLocal(date, endTimeSlot);
 
     const formData = new FormData(e.currentTarget);
     formData.set("tableId", selectedTableId);
@@ -108,6 +193,8 @@ export const ReservationForm = ({
     );
   }
 
+  const today = new Date().toISOString().split("T")[0];
+
   return (
     <Card>
       <CardHeader>
@@ -119,36 +206,113 @@ export const ReservationForm = ({
       <CardContent className="flex flex-col gap-6">
         {/* Step 1: Search */}
         <form onSubmit={handleSearch} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="date">Date</Label>
+            <Input
+              id="date"
+              type="date"
+              required
+              min={today}
+              value={date}
+              onChange={(e) => {
+                setDate(e.target.value);
+                setStartTimeSlot("");
+                setEndTimeSlot("");
+                resetSearch();
+              }}
+            />
+          </div>
+
+          {date && hasOpeningHours && isDayClosed && (
+            <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>
+                The restaurant is closed on{" "}
+                {DAY_NAMES[getDayOfWeekFromDate(date)]}s. Please select a
+                different date.
+              </span>
+            </div>
+          )}
+
+          {date && hasOpeningHours && !isDayClosed && selectedDayHours && (
+            <p className="text-xs text-muted-foreground">
+              Open on {DAY_NAMES[getDayOfWeekFromDate(date)]}:{" "}
+              {selectedDayHours.openTime} &ndash; {selectedDayHours.closeTime}
+            </p>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="startTime">Start Time</Label>
-              <Input
-                id="startTime"
-                type="datetime-local"
-                required
-                value={startTime}
-                onChange={(e) => {
-                  setStartTime(e.target.value);
-                  setHasSearched(false);
-                  setAvailableTables(null);
-                  setSelectedTableId(null);
-                }}
-              />
+              <Label htmlFor="startTimeSlot">Start Time</Label>
+              {hasOpeningHours ? (
+                <Select
+                  value={startTimeSlot}
+                  onValueChange={(val) => {
+                    setStartTimeSlot(val);
+                    setEndTimeSlot("");
+                    resetSearch();
+                  }}
+                  disabled={!date || isDayClosed}
+                >
+                  <SelectTrigger id="startTimeSlot">
+                    <SelectValue placeholder="Select start time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {startTimeSlots.map((slot) => (
+                      <SelectItem key={slot} value={slot}>
+                        {slot}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id="startTimeSlot"
+                  type="time"
+                  required
+                  value={startTimeSlot}
+                  onChange={(e) => {
+                    setStartTimeSlot(e.target.value);
+                    setEndTimeSlot("");
+                    resetSearch();
+                  }}
+                />
+              )}
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="endTime">End Time</Label>
-              <Input
-                id="endTime"
-                type="datetime-local"
-                required
-                value={endTime}
-                onChange={(e) => {
-                  setEndTime(e.target.value);
-                  setHasSearched(false);
-                  setAvailableTables(null);
-                  setSelectedTableId(null);
-                }}
-              />
+              <Label htmlFor="endTimeSlot">End Time</Label>
+              {hasOpeningHours ? (
+                <Select
+                  value={endTimeSlot}
+                  onValueChange={(val) => {
+                    setEndTimeSlot(val);
+                    resetSearch();
+                  }}
+                  disabled={!startTimeSlot || isDayClosed}
+                >
+                  <SelectTrigger id="endTimeSlot">
+                    <SelectValue placeholder="Select end time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {endTimeSlots.map((slot) => (
+                      <SelectItem key={slot} value={slot}>
+                        {slot}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id="endTimeSlot"
+                  type="time"
+                  required
+                  value={endTimeSlot}
+                  onChange={(e) => {
+                    setEndTimeSlot(e.target.value);
+                    resetSearch();
+                  }}
+                />
+              )}
             </div>
           </div>
 
@@ -163,14 +327,23 @@ export const ReservationForm = ({
               value={guestCount}
               onChange={(e) => {
                 setGuestCount(e.target.value);
-                setHasSearched(false);
-                setAvailableTables(null);
-                setSelectedTableId(null);
+                resetSearch();
               }}
             />
           </div>
 
-          <Button type="submit" variant="secondary" disabled={isSearching}>
+          <Button
+            type="submit"
+            variant="secondary"
+            disabled={
+              isSearching ||
+              !date ||
+              !startTimeSlot ||
+              !endTimeSlot ||
+              !guestCount ||
+              isDayClosed
+            }
+          >
             <Search className="mr-2 h-4 w-4" />
             {isSearching ? "Searching..." : "Search Available Tables"}
           </Button>
