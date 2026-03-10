@@ -24,7 +24,6 @@ export const OnboardingForm = ({ userName }: { userName: string }) => {
       const result = await setUserRole(role);
       if (result.success) {
         router.push(role === "RESTAURANT_OWNER" ? "/dashboard" : "/restaurants");
-        router.refresh();
       } else {
         setError(result.error);
       }

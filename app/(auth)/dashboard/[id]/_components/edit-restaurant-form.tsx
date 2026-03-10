@@ -56,9 +56,7 @@ export const EditRestaurantForm = ({
 
     startTransition(async () => {
       const result = await updateRestaurant(formData);
-      if (result.success) {
-        router.refresh();
-      } else {
+      if (!result.success) {
         setError(result.error);
       }
     });

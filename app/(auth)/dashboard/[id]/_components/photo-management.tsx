@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,7 +25,7 @@ export const PhotoManagement = ({
     order: number;
   }>;
 }) => {
-  const router = useRouter();
+
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -42,9 +41,7 @@ export const PhotoManagement = ({
 
     startTransition(async () => {
       const result = await uploadPhoto(formData);
-      if (result.success) {
-        router.refresh();
-      } else {
+      if (!result.success) {
         setError(result.error);
       }
       if (fileInputRef.current) {
@@ -56,7 +53,6 @@ export const PhotoManagement = ({
   const handleDelete = (photoId: string) => {
     startTransition(async () => {
       await deletePhoto(photoId);
-      router.refresh();
     });
   };
 

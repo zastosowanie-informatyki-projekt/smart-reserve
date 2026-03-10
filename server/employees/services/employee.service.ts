@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { authService } from "@/server/auth/services/auth.service";
+import { notificationService } from "@/server/notifications/services/notification.service";
 import { employeeRepository } from "../repositories/employee.repository";
 
 export const employeeService = {
@@ -31,7 +32,22 @@ export const employeeService = {
       throw new Error("User is not registered as an employee");
     }
 
-    return employeeRepository.addEmployee(userId, restaurantId);
+    const record = await employeeRepository.addEmployee(userId, restaurantId);
+
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id: restaurantId },
+      select: { name: true },
+    });
+
+    await notificationService.create(
+      userId,
+      "Added to Restaurant",
+      `You have been added as an employee at ${restaurant?.name ?? "a restaurant"}.`,
+      "employee_added",
+      `/dashboard/${restaurantId}`,
+    );
+
+    return record;
   },
 
   async getEmployees(restaurantId: string) {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -53,14 +52,13 @@ export const ReservationCard = ({
   table: { label: string };
   restaurant: { id: string; name: string };
 }) => {
-  const router = useRouter();
+
   const [isPending, startTransition] = useTransition();
   const canCancel = status === "PENDING" || status === "CONFIRMED";
 
   const handleCancel = () => {
     startTransition(async () => {
       await cancelReservation(id);
-      router.refresh();
     });
   };
 

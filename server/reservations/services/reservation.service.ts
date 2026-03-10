@@ -78,15 +78,13 @@ export const reservationService = {
       userId: session.user.id,
     });
 
-    notificationService
-      .notifyRestaurantStaff(
-        data.restaurantId,
-        "New Reservation",
-        `${session.user.name} requested a reservation for ${data.guestCount} guests.`,
-        "reservation_created",
-        `/dashboard/${data.restaurantId}`,
-      )
-      .catch(() => {});
+    await notificationService.notifyRestaurantStaff(
+      data.restaurantId,
+      "New Reservation",
+      `${session.user.name} requested a reservation for ${data.guestCount} guests.`,
+      "reservation_created",
+      `/dashboard/${data.restaurantId}`,
+    );
 
     return reservation;
   },
@@ -137,15 +135,13 @@ export const reservationService = {
     };
     const label = statusLabels[status];
     if (label) {
-      notificationService
-        .create(
-          reservation.userId,
-          "Reservation Updated",
-          `Your reservation at ${reservation.restaurant.name} has been ${label}.`,
-          "reservation_status",
-          `/reservations`,
-        )
-        .catch(() => {});
+      await notificationService.create(
+        reservation.userId,
+        "Reservation Updated",
+        `Your reservation at ${reservation.restaurant.name} has been ${label}.`,
+        "reservation_status",
+        `/reservations`,
+      );
     }
 
     return result;

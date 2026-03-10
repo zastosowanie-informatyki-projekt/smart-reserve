@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useTransition, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,7 +35,7 @@ export const EmployeeManagement = ({
 }: {
   restaurantId: string;
 }) => {
-  const router = useRouter();
+
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -97,7 +96,6 @@ export const EmployeeManagement = ({
         setShowResults(false);
         const updated = await getEmployees(restaurantId);
         if (updated.success) setEmployees(updated.data);
-        router.refresh();
       } else {
         setError(r.error);
       }
@@ -109,7 +107,6 @@ export const EmployeeManagement = ({
       await removeEmployee(employeeId, restaurantId);
       const updated = await getEmployees(restaurantId);
       if (updated.success) setEmployees(updated.data);
-      router.refresh();
     });
   };
 

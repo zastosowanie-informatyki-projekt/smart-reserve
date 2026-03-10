@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,7 +35,7 @@ export const OpeningHoursForm = ({
     isClosed: boolean;
   }>;
 }) => {
-  const router = useRouter();
+
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -71,9 +70,7 @@ export const OpeningHoursForm = ({
         restaurantId,
         hours,
       });
-      if (result.success) {
-        router.refresh();
-      } else {
+      if (!result.success) {
         setError(result.error);
       }
     });

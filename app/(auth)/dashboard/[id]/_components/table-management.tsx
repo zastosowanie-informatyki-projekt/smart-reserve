@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +29,7 @@ export const TableManagement = ({
     isActive: boolean;
   }>;
 }) => {
-  const router = useRouter();
+
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -47,7 +46,6 @@ export const TableManagement = ({
       const result = await createTable(formData);
       if (result.success) {
         form.reset();
-        router.refresh();
       } else {
         setError(result.error);
       }
@@ -57,7 +55,6 @@ export const TableManagement = ({
   const handleDeleteTable = (tableId: string) => {
     startTransition(async () => {
       await deleteTable(tableId);
-      router.refresh();
     });
   };
 

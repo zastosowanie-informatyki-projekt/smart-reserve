@@ -1,7 +1,6 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,13 +53,12 @@ export const ReservationManagement = ({
     user: { id: string; name: string; email: string };
   }>;
 }) => {
-  const router = useRouter();
+
   const [isPending, startTransition] = useTransition();
 
   const handleStatusChange = (id: string, status: string) => {
     startTransition(async () => {
       await updateReservationStatus({ id, status });
-      router.refresh();
     });
   };
 

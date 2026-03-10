@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,7 +36,7 @@ export const RoomManagement = ({
     }>;
   }>;
 }) => {
-  const router = useRouter();
+
   const [isPending, startTransition] = useTransition();
   const [roomError, setRoomError] = useState<string | null>(null);
   const [tableErrors, setTableErrors] = useState<Record<string, string | null>>({});
@@ -54,7 +53,6 @@ export const RoomManagement = ({
       const result = await createRoom(formData);
       if (result.success) {
         form.reset();
-        router.refresh();
       } else {
         setRoomError(result.error);
       }
@@ -64,7 +62,6 @@ export const RoomManagement = ({
   const handleDeleteRoom = (roomId: string) => {
     startTransition(async () => {
       await deleteRoom(roomId);
-      router.refresh();
     });
   };
 
@@ -78,7 +75,6 @@ export const RoomManagement = ({
       const result = await createTable(formData);
       if (result.success) {
         form.reset();
-        router.refresh();
       } else {
         setTableErrors((prev) => ({ ...prev, [roomId]: result.error }));
       }
@@ -88,7 +84,6 @@ export const RoomManagement = ({
   const handleDeleteTable = (tableId: string) => {
     startTransition(async () => {
       await deleteTable(tableId);
-      router.refresh();
     });
   };
 
