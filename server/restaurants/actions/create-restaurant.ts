@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/types";
 import { createRestaurantSchema } from "../schemas/restaurant.schema";
 import { restaurantService } from "../services/restaurant.service";
@@ -15,6 +16,7 @@ export async function createRestaurant(
     phone: formData.get("phone") || undefined,
     email: formData.get("email") || undefined,
     imageUrl: formData.get("imageUrl") || undefined,
+    website: formData.get("website") || undefined,
     cuisine: formData.get("cuisine") || undefined,
   });
 
@@ -24,6 +26,8 @@ export async function createRestaurant(
 
   try {
     const restaurant = await restaurantService.create(parsed.data);
+    revalidatePath("/dashboard");
+    revalidatePath("/restaurants");
     return { success: true, data: { id: restaurant.id } };
   } catch (error) {
     console.error("Failed to create restaurant:", error);

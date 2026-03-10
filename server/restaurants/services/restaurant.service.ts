@@ -59,7 +59,7 @@ export const restaurantService = {
 
   async setOpeningHours(data: SetOpeningHoursInput) {
     const session = await authService.requireAuth();
-    await authService.requireRestaurantOwner(
+    await authService.requireRestaurantAccess(
       session.user.id,
       data.restaurantId,
     );

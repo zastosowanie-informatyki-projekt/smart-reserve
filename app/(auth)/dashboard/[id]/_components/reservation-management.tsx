@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { updateReservationStatus } from "@/server/reservations/actions/update-reservation-status";
-import { MoreHorizontal, Check, X, Clock, AlertTriangle } from "lucide-react";
+import { MoreHorizontal, Check, X, AlertTriangle } from "lucide-react";
 import { APP_TIMEZONE } from "@/lib/date-utils";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -64,6 +64,102 @@ export const ReservationManagement = ({
     });
   };
 
+  const pending = reservations.filter((r) => r.status === "PENDING");
+  const confirmed = reservations.filter((r) => r.status === "CONFIRMED");
+  const rest = reservations.filter(
+    (r) => r.status !== "PENDING" && r.status !== "CONFIRMED",
+  );
+
+  const renderReservation = (reservation: (typeof reservations)[0]) => (
+    <div
+      key={reservation.id}
+      className="flex flex-wrap items-start justify-between gap-3 rounded-lg border p-4"
+    >
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">
+            {reservation.user.name}
+          </span>
+          <Badge variant={STATUS_VARIANT[reservation.status] ?? "outline"}>
+            {reservation.status}
+          </Badge>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {reservation.user.email}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {reservation.table.label} · {reservation.guestCount} guests
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {formatDateTime(reservation.startTime)} -{" "}
+          {formatDateTime(reservation.endTime)}
+        </p>
+        {reservation.notes && (
+          <p className="text-xs text-muted-foreground">
+            Notes: {reservation.notes}
+          </p>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        {reservation.status === "PENDING" && (
+          <>
+            <Button
+              size="sm"
+              onClick={() => handleStatusChange(reservation.id, "CONFIRMED")}
+              disabled={isPending}
+            >
+              <Check className="mr-1.5 h-3.5 w-3.5" />
+              Accept
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => handleStatusChange(reservation.id, "CANCELLED")}
+              disabled={isPending}
+            >
+              <X className="mr-1.5 h-3.5 w-3.5" />
+              Reject
+            </Button>
+          </>
+        )}
+        {reservation.status === "CONFIRMED" && (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={isPending}
+                />
+              }
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() =>
+                  handleStatusChange(reservation.id, "NO_SHOW")
+                }
+              >
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                Mark No-Show
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  handleStatusChange(reservation.id, "CANCELLED")
+                }
+                className="text-destructive"
+              >
+                <X className="mr-2 h-4 w-4" />
+                Cancel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -78,92 +174,35 @@ export const ReservationManagement = ({
             No reservations yet.
           </p>
         ) : (
-          <div className="grid gap-3">
-            {reservations.map((reservation) => (
-              <div
-                key={reservation.id}
-                className="flex flex-wrap items-start justify-between gap-3 rounded-lg border p-4"
-              >
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">
-                      {reservation.user.name}
-                    </span>
-                    <Badge variant={STATUS_VARIANT[reservation.status] ?? "outline"}>
-                      {reservation.status}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {reservation.user.email}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {reservation.table.label} · {reservation.guestCount} guests
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatDateTime(reservation.startTime)} -{" "}
-                    {formatDateTime(reservation.endTime)}
-                  </p>
-                  {reservation.notes && (
-                    <p className="text-xs text-muted-foreground">
-                      Notes: {reservation.notes}
-                    </p>
-                  )}
+          <div className="flex flex-col gap-6">
+            {pending.length > 0 && (
+              <div className="flex flex-col gap-3">
+                <h3 className="text-sm font-semibold">
+                  Pending Approval ({pending.length})
+                </h3>
+                <div className="grid gap-3">
+                  {pending.map(renderReservation)}
                 </div>
-                {reservation.status !== "CANCELLED" &&
-                  reservation.status !== "COMPLETED" && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        render={
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={isPending}
-                          />
-                        }
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {reservation.status === "PENDING" && (
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleStatusChange(reservation.id, "CONFIRMED")
-                            }
-                          >
-                            <Check className="mr-2 h-4 w-4" />
-                            Confirm
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          onClick={() =>
-                            handleStatusChange(reservation.id, "COMPLETED")
-                          }
-                        >
-                          <Clock className="mr-2 h-4 w-4" />
-                          Mark Completed
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            handleStatusChange(reservation.id, "NO_SHOW")
-                          }
-                        >
-                          <AlertTriangle className="mr-2 h-4 w-4" />
-                          Mark No-Show
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            handleStatusChange(reservation.id, "CANCELLED")
-                          }
-                          className="text-destructive"
-                        >
-                          <X className="mr-2 h-4 w-4" />
-                          Cancel
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
               </div>
-            ))}
+            )}
+            {confirmed.length > 0 && (
+              <div className="flex flex-col gap-3">
+                <h3 className="text-sm font-semibold">
+                  Confirmed ({confirmed.length})
+                </h3>
+                <div className="grid gap-3">
+                  {confirmed.map(renderReservation)}
+                </div>
+              </div>
+            )}
+            {rest.length > 0 && (
+              <div className="flex flex-col gap-3">
+                <h3 className="text-sm font-semibold">Past & Other</h3>
+                <div className="grid gap-3">
+                  {rest.map(renderReservation)}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

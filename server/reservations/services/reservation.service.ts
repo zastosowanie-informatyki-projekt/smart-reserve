@@ -1,9 +1,26 @@
+import { prisma } from "@/lib/prisma";
 import { authService } from "@/server/auth/services/auth.service";
 import { tableRepository } from "@/server/tables/repositories/table.repository";
 import { restaurantRepository } from "@/server/restaurants/repositories/restaurant.repository";
+import { notificationService } from "@/server/notifications/services/notification.service";
 import { reservationRepository } from "../repositories/reservation.repository";
 import { formatTimeInAppTz, getDayOfWeekInAppTz } from "@/lib/date-utils";
 import type { CreateReservationInput } from "../types";
+
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  PENDING: ["CONFIRMED", "CANCELLED"],
+  CONFIRMED: ["CANCELLED", "COMPLETED", "NO_SHOW"],
+};
+
+async function autoCompleteExpired() {
+  await prisma.reservation.updateMany({
+    where: {
+      status: "CONFIRMED",
+      endTime: { lt: new Date() },
+    },
+    data: { status: "COMPLETED" },
+  });
+}
 
 export const reservationService = {
   async create(data: CreateReservationInput) {
@@ -23,6 +40,9 @@ export const reservationService = {
     }
     if (!table.isActive) {
       throw new Error("This table is not available");
+    }
+    if (table.room.restaurantId !== data.restaurantId) {
+      throw new Error("Table does not belong to this restaurant");
     }
     if (data.guestCount > table.capacity) {
       throw new Error(`Guest count exceeds table capacity of ${table.capacity}`);
@@ -53,10 +73,22 @@ export const reservationService = {
       throw new Error("This table is already reserved for the selected time");
     }
 
-    return reservationRepository.create({
+    const reservation = await reservationRepository.create({
       ...data,
       userId: session.user.id,
     });
+
+    notificationService
+      .notifyRestaurantStaff(
+        data.restaurantId,
+        "New Reservation",
+        `${session.user.name} requested a reservation for ${data.guestCount} guests.`,
+        "reservation_created",
+        `/dashboard/${data.restaurantId}`,
+      )
+      .catch(() => {});
+
+    return reservation;
   },
 
   async cancel(id: string) {
@@ -87,19 +119,48 @@ export const reservationService = {
       throw new Error("Reservation not found");
     }
 
-    await authService.requireRestaurantOwner(session.user.id, reservation.restaurantId);
+    await authService.requireRestaurantAccess(session.user.id, reservation.restaurantId);
 
-    return reservationRepository.updateStatus(id, status);
+    const allowed = VALID_TRANSITIONS[reservation.status];
+    if (!allowed || !allowed.includes(status)) {
+      throw new Error(
+        `Cannot change status from ${reservation.status} to ${status}`,
+      );
+    }
+
+    const result = await reservationRepository.updateStatus(id, status);
+
+    const statusLabels: Record<string, string> = {
+      CONFIRMED: "confirmed",
+      CANCELLED: "cancelled",
+      NO_SHOW: "marked as no-show",
+    };
+    const label = statusLabels[status];
+    if (label) {
+      notificationService
+        .create(
+          reservation.userId,
+          "Reservation Updated",
+          `Your reservation at ${reservation.restaurant.name} has been ${label}.`,
+          "reservation_status",
+          `/reservations`,
+        )
+        .catch(() => {});
+    }
+
+    return result;
   },
 
   async findByUserId() {
     const session = await authService.requireAuth();
+    await autoCompleteExpired();
     return reservationRepository.findByUserId(session.user.id);
   },
 
   async findByRestaurantId(restaurantId: string, filters?: { from?: Date; to?: Date }) {
     const session = await authService.requireAuth();
-    await authService.requireRestaurantOwner(session.user.id, restaurantId);
+    await authService.requireRestaurantAccess(session.user.id, restaurantId);
+    await autoCompleteExpired();
     return reservationRepository.findByRestaurantId(restaurantId, filters);
   },
 };

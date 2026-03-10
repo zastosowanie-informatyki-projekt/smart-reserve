@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/types";
 import { updateRestaurantSchema } from "../schemas/restaurant.schema";
 import { restaurantService } from "../services/restaurant.service";
@@ -16,6 +17,7 @@ export async function updateRestaurant(
     phone: formData.get("phone") || undefined,
     email: formData.get("email") || undefined,
     imageUrl: formData.get("imageUrl") || undefined,
+    website: formData.get("website") || undefined,
     cuisine: formData.get("cuisine") || undefined,
   });
 
@@ -25,6 +27,8 @@ export async function updateRestaurant(
 
   try {
     const restaurant = await restaurantService.update(parsed.data);
+    revalidatePath(`/dashboard/${restaurant.id}`);
+    revalidatePath(`/restaurants/${restaurant.id}`);
     return { success: true, data: { id: restaurant.id } };
   } catch (error) {
     console.error("Failed to update restaurant:", error);

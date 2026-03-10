@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/types";
 import { updateTableSchema } from "../schemas/table.schema";
 import { tableService } from "../services/table.service";
@@ -25,6 +26,7 @@ export async function updateTable(
 
   try {
     const table = await tableService.update(parsed.data);
+    revalidatePath("/dashboard", "layout");
     return { success: true, data: { id: table.id } };
   } catch (error) {
     console.error("Failed to update table:", error);

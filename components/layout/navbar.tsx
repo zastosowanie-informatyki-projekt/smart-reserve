@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { NavbarAuth } from "./navbar-auth";
+import { NotificationBell } from "./notification-bell";
 
 export const Navbar = async () => {
   const session = await auth.api.getSession({
@@ -11,10 +12,11 @@ export const Navbar = async () => {
 
   let hasRestaurants = false;
   if (session) {
-    const count = await prisma.restaurant.count({
-      where: { ownerId: session.user.id },
-    });
-    hasRestaurants = count > 0;
+    const [ownedCount, employeeCount] = await Promise.all([
+      prisma.restaurant.count({ where: { ownerId: session.user.id } }),
+      prisma.restaurantEmployee.count({ where: { userId: session.user.id } }),
+    ]);
+    hasRestaurants = ownedCount > 0 || employeeCount > 0;
   }
 
   return (
@@ -33,7 +35,10 @@ export const Navbar = async () => {
             </Link>
           </nav>
         </div>
-        <NavbarAuth session={session} hasRestaurants={hasRestaurants} />
+        <div className="flex items-center gap-2">
+          {session && <NotificationBell />}
+          <NavbarAuth session={session} hasRestaurants={hasRestaurants} />
+        </div>
       </div>
     </header>
   );

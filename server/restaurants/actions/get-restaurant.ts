@@ -13,6 +13,7 @@ export async function getRestaurant(id: string): Promise<
     phone: string | null;
     email: string | null;
     imageUrl: string | null;
+    website: string | null;
     cuisine: string | null;
     ownerId: string;
     createdAt: Date;
@@ -21,6 +22,12 @@ export async function getRestaurant(id: string): Promise<
       openTime: string;
       closeTime: string;
       isClosed: boolean;
+    }>;
+    photos: Array<{
+      id: string;
+      url: string;
+      altText: string | null;
+      order: number;
     }>;
   }>
 > {

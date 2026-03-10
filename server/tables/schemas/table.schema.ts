@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createTableSchema = z.object({
-  restaurantId: z.string().min(1, "Restaurant ID is required"),
+  roomId: z.string().min(1, "Room ID is required"),
   label: z.string().min(1, "Label is required"),
   capacity: z.number().int().positive("Capacity must be a positive number"),
   description: z.string().optional(),

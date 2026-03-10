@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { RestaurantInfo } from "./_components/restaurant-info";
 import { OpeningHoursDisplay } from "./_components/opening-hours-display";
 import { ReservationForm } from "./_components/reservation-form";
+import { PhotoGallery } from "./_components/photo-gallery";
 
 export default async function RestaurantDetailPage({
   params,
@@ -34,8 +35,16 @@ export default async function RestaurantDetailPage({
           city={restaurant.city}
           phone={restaurant.phone}
           email={restaurant.email}
+          website={restaurant.website}
           cuisine={restaurant.cuisine}
         />
+
+        {restaurant.photos.length > 0 && (
+          <>
+            <Separator />
+            <PhotoGallery photos={restaurant.photos} />
+          </>
+        )}
 
         <Separator />
 

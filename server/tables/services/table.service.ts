@@ -1,13 +1,20 @@
 import { authService } from "@/server/auth/services/auth.service";
+import { roomRepository } from "@/server/rooms/repositories/room.repository";
 import { tableRepository } from "../repositories/table.repository";
 import type { CreateTableInput, UpdateTableInput } from "../types";
 
 export const tableService = {
   async create(data: CreateTableInput) {
     const session = await authService.requireAuth();
-    await authService.requireRestaurantOwner(
+    const room = await roomRepository.findById(data.roomId);
+
+    if (!room) {
+      throw new Error("Room not found");
+    }
+
+    await authService.requireRestaurantAccess(
       session.user.id,
-      data.restaurantId,
+      room.restaurantId,
     );
     return tableRepository.create(data);
   },
@@ -20,9 +27,9 @@ export const tableService = {
       throw new Error("Table not found");
     }
 
-    await authService.requireRestaurantOwner(
+    await authService.requireRestaurantAccess(
       session.user.id,
-      table.restaurantId,
+      table.room.restaurantId,
     );
 
     return tableRepository.update(data);
@@ -36,9 +43,9 @@ export const tableService = {
       throw new Error("Table not found");
     }
 
-    await authService.requireRestaurantOwner(
+    await authService.requireRestaurantAccess(
       session.user.id,
-      table.restaurantId,
+      table.room.restaurantId,
     );
 
     return tableRepository.softDelete(id);

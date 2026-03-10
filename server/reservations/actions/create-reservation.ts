@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/types";
 import { createReservationSchema } from "../schemas/reservation.schema";
 import { reservationService } from "../services/reservation.service";
@@ -22,6 +23,8 @@ export async function createReservation(
 
   try {
     const reservation = await reservationService.create(parsed.data);
+    revalidatePath("/reservations");
+    revalidatePath(`/dashboard/${parsed.data.restaurantId}`);
     return { success: true, data: { id: reservation.id } };
   } catch (error) {
     const message =

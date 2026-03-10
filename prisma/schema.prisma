@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../app/generated/prisma"
@@ -16,6 +10,7 @@ datasource db {
 enum UserRole {
   USER
   RESTAURANT_OWNER
+  EMPLOYEE
 }
 
 enum ReservationStatus {
@@ -27,18 +22,21 @@ enum ReservationStatus {
 }
 
 model User {
-  id            String        @id
+  id            String               @id
   name          String
   email         String
-  emailVerified Boolean       @default(false)
+  emailVerified Boolean              @default(false)
   image         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  role          UserRole      @default(USER)
+  onboarded     Boolean              @default(false)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  role          UserRole             @default(USER)
   sessions      Session[]
   accounts      Account[]
   restaurants   Restaurant[]
   reservations  Reservation[]
+  notifications Notification[]
+  employeeAt    RestaurantEmployee[]
 
   @@unique([email])
   @@map("user")
@@ -93,7 +91,7 @@ model Verification {
 }
 
 model Restaurant {
-  id           String            @id @default(cuid())
+  id           String               @id @default(cuid())
   name         String
   description  String?
   address      String
@@ -101,18 +99,36 @@ model Restaurant {
   phone        String?
   email        String?
   imageUrl     String?
+  website      String?
   cuisine      String?
   ownerId      String
-  owner        User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  tables       RestaurantTable[]
+  owner        User                 @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  rooms        Room[]
   openingHours OpeningHours[]
   reservations Reservation[]
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  photos       RestaurantPhoto[]
+  employees    RestaurantEmployee[]
+  invitations  EmployeeInvitation[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
 
   @@index([ownerId])
   @@index([city])
   @@map("restaurant")
+}
+
+model Room {
+  id           String            @id @default(cuid())
+  name         String
+  description  String?
+  restaurantId String
+  restaurant   Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  tables       RestaurantTable[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([restaurantId])
+  @@map("room")
 }
 
 model RestaurantTable {
@@ -121,13 +137,13 @@ model RestaurantTable {
   capacity     Int
   description  String?
   isActive     Boolean       @default(true)
-  restaurantId String
-  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  roomId       String
+  room         Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
   reservations Reservation[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
-  @@index([restaurantId])
+  @@index([roomId])
   @@map("restaurant_table")
 }
 
@@ -165,4 +181,61 @@ model OpeningHours {
 
   @@unique([restaurantId, dayOfWeek])
   @@map("opening_hours")
+}
+
+model RestaurantPhoto {
+  id           String     @id @default(cuid())
+  url          String
+  altText      String?
+  order        Int        @default(0)
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@index([restaurantId])
+  @@map("restaurant_photo")
+}
+
+model RestaurantEmployee {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, restaurantId])
+  @@index([userId])
+  @@index([restaurantId])
+  @@map("restaurant_employee")
+}
+
+model EmployeeInvitation {
+  id           String     @id @default(cuid())
+  email        String
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  token        String     @unique @default(cuid())
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  createdAt    DateTime   @default(now())
+
+  @@index([email])
+  @@index([restaurantId])
+  @@map("employee_invitation")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@map("notification")
 }

@@ -74,6 +74,11 @@ export const CreateRestaurantForm = () => {
         </div>
       </div>
 
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="website">Website</Label>
+        <Input id="website" name="website" type="url" placeholder="https://myrestaurant.com" />
+      </div>
+
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <Button type="submit" disabled={isPending} className="w-fit">

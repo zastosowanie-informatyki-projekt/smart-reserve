@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/types";
 import { updateReservationStatusSchema } from "../schemas/reservation.schema";
 import { reservationService } from "../services/reservation.service";
@@ -18,6 +19,8 @@ export async function updateReservationStatus(
       parsed.data.id,
       parsed.data.status,
     );
+    revalidatePath("/reservations");
+    revalidatePath("/dashboard", "layout");
     return { success: true, data: result };
   } catch (error) {
     const message =

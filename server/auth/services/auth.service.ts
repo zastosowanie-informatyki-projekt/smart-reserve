@@ -36,4 +36,30 @@ export const authService = {
       throw new Error("You are not the owner of this restaurant");
     }
   },
+
+  async requireRestaurantAccess(
+    userId: string,
+    restaurantId: string,
+  ): Promise<void> {
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id: restaurantId },
+      select: { ownerId: true },
+    });
+
+    if (!restaurant) {
+      throw new Error("Restaurant not found");
+    }
+
+    if (restaurant.ownerId === userId) {
+      return;
+    }
+
+    const employee = await prisma.restaurantEmployee.findUnique({
+      where: { userId_restaurantId: { userId, restaurantId } },
+    });
+
+    if (!employee) {
+      throw new Error("You do not have access to this restaurant");
+    }
+  },
 };

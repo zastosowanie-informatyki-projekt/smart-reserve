@@ -11,7 +11,8 @@ export const tableRepository = {
         capacity: true,
         description: true,
         isActive: true,
-        restaurantId: true,
+        roomId: true,
+        room: { select: { restaurantId: true } },
         createdAt: true,
       },
     });
@@ -28,7 +29,8 @@ export const tableRepository = {
         capacity: true,
         description: true,
         isActive: true,
-        restaurantId: true,
+        roomId: true,
+        room: { select: { restaurantId: true } },
         updatedAt: true,
       },
     });
@@ -50,15 +52,16 @@ export const tableRepository = {
         capacity: true,
         description: true,
         isActive: true,
-        restaurantId: true,
+        roomId: true,
+        room: { select: { restaurantId: true } },
       },
     });
   },
 
-  async findByRestaurantId(restaurantId: string, activeOnly = true) {
+  async findByRoomId(roomId: string, activeOnly = true) {
     return prisma.restaurantTable.findMany({
       where: {
-        restaurantId,
+        roomId,
         ...(activeOnly && { isActive: true }),
       },
       select: {
@@ -67,6 +70,24 @@ export const tableRepository = {
         capacity: true,
         description: true,
         isActive: true,
+      },
+      orderBy: { label: "asc" },
+    });
+  },
+
+  async findByRestaurantId(restaurantId: string, activeOnly = true) {
+    return prisma.restaurantTable.findMany({
+      where: {
+        room: { restaurantId },
+        ...(activeOnly && { isActive: true }),
+      },
+      select: {
+        id: true,
+        label: true,
+        capacity: true,
+        description: true,
+        isActive: true,
+        roomId: true,
       },
       orderBy: { label: "asc" },
     });

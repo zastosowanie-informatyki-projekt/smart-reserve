@@ -1,14 +1,17 @@
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { prisma } from "@/lib/prisma";
 import { getRestaurant } from "@/server/restaurants/actions/get-restaurant";
-import { getTables } from "@/server/tables/actions/get-tables";
+import { getRooms } from "@/server/rooms/actions/get-rooms";
 import { getRestaurantReservations } from "@/server/reservations/actions/get-restaurant-reservations";
 import { Separator } from "@/components/ui/separator";
 import { EditRestaurantForm } from "./_components/edit-restaurant-form";
-import { TableManagement } from "./_components/table-management";
+import { RoomManagement } from "./_components/room-management";
 import { OpeningHoursForm } from "./_components/opening-hours-form";
 import { ReservationManagement } from "./_components/reservation-management";
+import { PhotoManagement } from "./_components/photo-management";
+import { EmployeeManagement } from "./_components/employee-management";
 
 export default async function ManageRestaurantPage({
   params,
@@ -25,10 +28,25 @@ export default async function ManageRestaurantPage({
 
   const { id } = await params;
 
-  const [restaurantResult, tablesResult, reservationsResult] =
+  const isOwner = await prisma.restaurant.findFirst({
+    where: { id, ownerId: session.user.id },
+    select: { id: true },
+  });
+  const isEmployee = !isOwner
+    ? await prisma.restaurantEmployee.findFirst({
+        where: { restaurantId: id, userId: session.user.id },
+        select: { id: true },
+      })
+    : null;
+
+  if (!isOwner && !isEmployee) {
+    redirect("/dashboard");
+  }
+
+  const [restaurantResult, roomsResult, reservationsResult] =
     await Promise.all([
       getRestaurant(id),
-      getTables(id),
+      getRooms(id),
       getRestaurantReservations(id),
     ]);
 
@@ -37,12 +55,7 @@ export default async function ManageRestaurantPage({
   }
 
   const restaurant = restaurantResult.data;
-
-  if (restaurant.ownerId !== session.user.id) {
-    redirect("/dashboard");
-  }
-
-  const tables = tablesResult.success ? tablesResult.data : [];
+  const rooms = roomsResult.success ? roomsResult.data : [];
   const reservations = reservationsResult.success
     ? reservationsResult.data
     : [];
@@ -54,13 +67,19 @@ export default async function ManageRestaurantPage({
           Manage {restaurant.name}
         </h1>
         <p className="text-muted-foreground">
-          Edit details, manage tables, set opening hours, and view reservations
+          Edit details, manage rooms & tables, set opening hours, and view
+          reservations
         </p>
       </div>
       <div className="flex flex-col gap-8">
         <EditRestaurantForm restaurant={restaurant} />
         <Separator />
-        <TableManagement restaurantId={id} tables={tables} />
+        <PhotoManagement
+          restaurantId={id}
+          photos={restaurant.photos}
+        />
+        <Separator />
+        <RoomManagement restaurantId={id} rooms={rooms} />
         <Separator />
         <OpeningHoursForm
           restaurantId={id}
@@ -68,6 +87,12 @@ export default async function ManageRestaurantPage({
         />
         <Separator />
         <ReservationManagement reservations={reservations} />
+        {!!isOwner && (
+          <>
+            <Separator />
+            <EmployeeManagement restaurantId={id} />
+          </>
+        )}
       </div>
     </div>
   );

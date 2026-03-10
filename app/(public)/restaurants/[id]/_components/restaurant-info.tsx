@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, Mail } from "lucide-react";
+import { MapPin, Phone, Mail, Globe } from "lucide-react";
 
 export const RestaurantInfo = ({
   name,
@@ -8,6 +8,7 @@ export const RestaurantInfo = ({
   city,
   phone,
   email,
+  website,
   cuisine,
 }: {
   name: string;
@@ -16,6 +17,7 @@ export const RestaurantInfo = ({
   city: string;
   phone: string | null;
   email: string | null;
+  website: string | null;
   cuisine: string | null;
 }) => {
   return (
@@ -44,6 +46,19 @@ export const RestaurantInfo = ({
           <div className="flex items-center gap-2 text-muted-foreground">
             <Mail className="h-4 w-4 shrink-0" />
             <span>{email}</span>
+          </div>
+        )}
+        {website && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Globe className="h-4 w-4 shrink-0" />
+            <a
+              href={website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground"
+            >
+              {website.replace(/^https?:\/\//, "")}
+            </a>
           </div>
         )}
       </div>

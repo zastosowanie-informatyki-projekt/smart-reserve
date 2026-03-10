@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/types";
 import { reservationService } from "../services/reservation.service";
 
@@ -8,6 +9,8 @@ export async function cancelReservation(
 ): Promise<ActionResult<{ id: string; status: string }>> {
   try {
     const result = await reservationService.cancel(id);
+    revalidatePath("/reservations");
+    revalidatePath("/dashboard", "layout");
     return { success: true, data: result };
   } catch (error) {
     const message =

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/types";
 import { createTableSchema } from "../schemas/table.schema";
 import { tableService } from "../services/table.service";
@@ -8,7 +9,7 @@ export async function createTable(
   formData: FormData,
 ): Promise<ActionResult<{ id: string }>> {
   const parsed = createTableSchema.safeParse({
-    restaurantId: formData.get("restaurantId"),
+    roomId: formData.get("roomId"),
     label: formData.get("label"),
     capacity: Number(formData.get("capacity")),
     description: formData.get("description") || undefined,
@@ -20,6 +21,7 @@ export async function createTable(
 
   try {
     const table = await tableService.create(parsed.data);
+    revalidatePath("/dashboard", "layout");
     return { success: true, data: { id: table.id } };
   } catch (error) {
     console.error("Failed to create table:", error);

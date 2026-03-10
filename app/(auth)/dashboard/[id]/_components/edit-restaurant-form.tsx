@@ -37,6 +37,7 @@ export const EditRestaurantForm = ({
     city: string;
     phone: string | null;
     email: string | null;
+    website: string | null;
     cuisine: string | null;
   };
 }) => {
@@ -182,6 +183,16 @@ export const EditRestaurantForm = ({
                 defaultValue={restaurant.email ?? ""}
               />
             </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-website">Website</Label>
+            <Input
+              id="edit-website"
+              name="website"
+              type="url"
+              defaultValue={restaurant.website ?? ""}
+              placeholder="https://myrestaurant.com"
+            />
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}

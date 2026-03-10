@@ -37,7 +37,7 @@ export async function getAvailableTables(input: {
 
     const tables = await prisma.restaurantTable.findMany({
       where: {
-        restaurantId: input.restaurantId,
+        room: { restaurantId: input.restaurantId },
         isActive: true,
         capacity: { gte: input.guestCount },
         reservations: {

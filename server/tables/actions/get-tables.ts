@@ -11,6 +11,7 @@ export async function getTables(restaurantId: string): Promise<
       capacity: number;
       description: string | null;
       isActive: boolean;
+      roomId: string;
     }>
   >
 > {
