@@ -6,25 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { getAvailableTables } from "@/server/tables/actions/get-available-tables";
 import { createReservation } from "@/server/reservations/actions/create-reservation";
 import { TableList } from "./table-list";
 import { Search, AlertCircle } from "lucide-react";
+import { toUTC } from "@/lib/date-utils";
 
 type OpeningHoursEntry = {
   dayOfWeek: number;
@@ -54,15 +43,7 @@ function getDayOfWeekFromDate(dateStr: string): number {
   return jsDay === 0 ? 6 : jsDay - 1;
 }
 
-const DAY_NAMES = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
+const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export const ReservationForm = ({
   restaurantId,
@@ -83,14 +64,12 @@ export const ReservationForm = ({
   const [endTimeSlot, setEndTimeSlot] = useState("");
   const [guestCount, setGuestCount] = useState("");
 
-  const [availableTables, setAvailableTables] = useState<
-    Array<{
-      id: string;
-      label: string;
-      capacity: number;
-      description: string | null;
-    }> | null
-  >(null);
+  const [availableTables, setAvailableTables] = useState<Array<{
+    id: string;
+    label: string;
+    capacity: number;
+    description: string | null;
+  }> | null>(null);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -122,8 +101,7 @@ export const ReservationForm = ({
     setSelectedTableId(null);
   };
 
-  const toDatetimeLocal = (dateStr: string, timeStr: string) =>
-    `${dateStr}T${timeStr}`;
+  const toUTCISO = (dateStr: string, timeStr: string) => toUTC(dateStr, timeStr).toISOString();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,8 +109,8 @@ export const ReservationForm = ({
     setSelectedTableId(null);
     setAvailableTables(null);
 
-    const startTime = toDatetimeLocal(date, startTimeSlot);
-    const endTime = toDatetimeLocal(date, endTimeSlot);
+    const startTime = toUTCISO(date, startTimeSlot);
+    const endTime = toUTCISO(date, endTimeSlot);
 
     startSearchTransition(async () => {
       const result = await getAvailableTables({
@@ -160,8 +138,8 @@ export const ReservationForm = ({
       return;
     }
 
-    const startTime = toDatetimeLocal(date, startTimeSlot);
-    const endTime = toDatetimeLocal(date, endTimeSlot);
+    const startTime = toUTCISO(date, startTimeSlot);
+    const endTime = toUTCISO(date, endTimeSlot);
 
     const formData = new FormData(e.currentTarget);
     formData.set("tableId", selectedTableId);
@@ -185,9 +163,7 @@ export const ReservationForm = ({
       <Card>
         <CardHeader>
           <CardTitle>Make a Reservation</CardTitle>
-          <CardDescription>
-            Please sign in to make a reservation.
-          </CardDescription>
+          <CardDescription>Please sign in to make a reservation.</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -199,9 +175,7 @@ export const ReservationForm = ({
     <Card>
       <CardHeader>
         <CardTitle>Make a Reservation</CardTitle>
-        <CardDescription>
-          Choose your date, time, and party size to see available tables.
-        </CardDescription>
+        <CardDescription>Choose your date, time, and party size to see available tables.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
         {/* Step 1: Search */}
@@ -227,8 +201,7 @@ export const ReservationForm = ({
             <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>
-                The restaurant is closed on{" "}
-                {DAY_NAMES[getDayOfWeekFromDate(date)]}s. Please select a
+                The restaurant is closed on {DAY_NAMES[getDayOfWeekFromDate(date)]}s. Please select a
                 different date.
               </span>
             </div>
@@ -236,8 +209,8 @@ export const ReservationForm = ({
 
           {date && hasOpeningHours && !isDayClosed && selectedDayHours && (
             <p className="text-xs text-muted-foreground">
-              Open on {DAY_NAMES[getDayOfWeekFromDate(date)]}:{" "}
-              {selectedDayHours.openTime} &ndash; {selectedDayHours.closeTime}
+              Open on {DAY_NAMES[getDayOfWeekFromDate(date)]}: {selectedDayHours.openTime} &ndash;{" "}
+              {selectedDayHours.closeTime}
             </p>
           )}
 
@@ -248,7 +221,7 @@ export const ReservationForm = ({
                 <Select
                   value={startTimeSlot}
                   onValueChange={(val) => {
-                    setStartTimeSlot(val);
+                    setStartTimeSlot(val ?? "");
                     setEndTimeSlot("");
                     resetSearch();
                   }}
@@ -285,7 +258,7 @@ export const ReservationForm = ({
                 <Select
                   value={endTimeSlot}
                   onValueChange={(val) => {
-                    setEndTimeSlot(val);
+                    setEndTimeSlot(val ?? "");
                     resetSearch();
                   }}
                   disabled={!startTimeSlot || isDayClosed}
@@ -335,14 +308,7 @@ export const ReservationForm = ({
           <Button
             type="submit"
             variant="secondary"
-            disabled={
-              isSearching ||
-              !date ||
-              !startTimeSlot ||
-              !endTimeSlot ||
-              !guestCount ||
-              isDayClosed
-            }
+            disabled={isSearching || !date || !startTimeSlot || !endTimeSlot || !guestCount || isDayClosed}
           >
             <Search className="mr-2 h-4 w-4" />
             {isSearching ? "Searching..." : "Search Available Tables"}
@@ -356,15 +322,13 @@ export const ReservationForm = ({
 
             {availableTables.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No tables available for the selected date, time, and party size.
-                Try different times or a smaller group.
+                No tables available for the selected date, time, and party size. Try different times or a
+                smaller group.
               </p>
             ) : (
               <form onSubmit={handleBook} className="flex flex-col gap-4">
                 <div className="flex flex-col gap-3">
-                  <Label>
-                    Available Tables ({availableTables.length} found)
-                  </Label>
+                  <Label>Available Tables ({availableTables.length} found)</Label>
                   <TableList
                     tables={availableTables}
                     selectedTableId={selectedTableId}
@@ -374,17 +338,10 @@ export const ReservationForm = ({
 
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="notes">Notes (optional)</Label>
-                  <Textarea
-                    id="notes"
-                    name="notes"
-                    placeholder="Any special requests..."
-                    rows={3}
-                  />
+                  <Textarea id="notes" name="notes" placeholder="Any special requests..." rows={3} />
                 </div>
 
-                {error && (
-                  <p className="text-sm text-destructive">{error}</p>
-                )}
+                {error && <p className="text-sm text-destructive">{error}</p>}
 
                 <Button type="submit" disabled={isBooking || !selectedTableId}>
                   {isBooking ? "Reserving..." : "Reserve Table"}
@@ -394,9 +351,7 @@ export const ReservationForm = ({
           </>
         )}
 
-        {!hasSearched && error && (
-          <p className="text-sm text-destructive">{error}</p>
-        )}
+        {!hasSearched && error && <p className="text-sm text-destructive">{error}</p>}
       </CardContent>
     </Card>
   );

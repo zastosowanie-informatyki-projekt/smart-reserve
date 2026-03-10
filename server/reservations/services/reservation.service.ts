@@ -2,6 +2,7 @@ import { authService } from "@/server/auth/services/auth.service";
 import { tableRepository } from "@/server/tables/repositories/table.repository";
 import { restaurantRepository } from "@/server/restaurants/repositories/restaurant.repository";
 import { reservationRepository } from "../repositories/reservation.repository";
+import { formatTimeInAppTz, getDayOfWeekInAppTz } from "@/lib/date-utils";
 import type { CreateReservationInput } from "../types";
 
 export const reservationService = {
@@ -24,17 +25,12 @@ export const reservationService = {
       throw new Error("This table is not available");
     }
     if (data.guestCount > table.capacity) {
-      throw new Error(
-        `Guest count exceeds table capacity of ${table.capacity}`,
-      );
+      throw new Error(`Guest count exceeds table capacity of ${table.capacity}`);
     }
 
-    const openingHours = await restaurantRepository.findOpeningHours(
-      data.restaurantId,
-    );
+    const openingHours = await restaurantRepository.findOpeningHours(data.restaurantId);
     if (openingHours.length > 0) {
-      const dayOfWeek = data.startTime.getDay();
-      const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      const adjustedDay = getDayOfWeekInAppTz(data.startTime);
       const dayHours = openingHours.find((h) => h.dayOfWeek === adjustedDay);
 
       if (dayHours?.isClosed) {
@@ -42,9 +38,8 @@ export const reservationService = {
       }
 
       if (dayHours) {
-        const startTimeStr = `${String(data.startTime.getUTCHours()).padStart(2, "0")}:${String(data.startTime.getUTCMinutes()).padStart(2, "0")}`;
-        const endTimeStr = `${String(data.endTime.getUTCHours()).padStart(2, "0")}:${String(data.endTime.getUTCMinutes()).padStart(2, "0")}`;
-
+        const startTimeStr = formatTimeInAppTz(data.startTime);
+        const endTimeStr = formatTimeInAppTz(data.endTime);
         if (startTimeStr < dayHours.openTime || endTimeStr > dayHours.closeTime) {
           throw new Error(
             `Reservation must be within opening hours: ${dayHours.openTime} - ${dayHours.closeTime}`,
@@ -53,11 +48,7 @@ export const reservationService = {
       }
     }
 
-    const overlap = await reservationRepository.findOverlapping(
-      data.tableId,
-      data.startTime,
-      data.endTime,
-    );
+    const overlap = await reservationRepository.findOverlapping(data.tableId, data.startTime, data.endTime);
     if (overlap) {
       throw new Error("This table is already reserved for the selected time");
     }
@@ -96,10 +87,7 @@ export const reservationService = {
       throw new Error("Reservation not found");
     }
 
-    await authService.requireRestaurantOwner(
-      session.user.id,
-      reservation.restaurantId,
-    );
+    await authService.requireRestaurantOwner(session.user.id, reservation.restaurantId);
 
     return reservationRepository.updateStatus(id, status);
   },
@@ -109,10 +97,7 @@ export const reservationService = {
     return reservationRepository.findByUserId(session.user.id);
   },
 
-  async findByRestaurantId(
-    restaurantId: string,
-    filters?: { from?: Date; to?: Date },
-  ) {
+  async findByRestaurantId(restaurantId: string, filters?: { from?: Date; to?: Date }) {
     const session = await authService.requireAuth();
     await authService.requireRestaurantOwner(session.user.id, restaurantId);
     return reservationRepository.findByRestaurantId(restaurantId, filters);
