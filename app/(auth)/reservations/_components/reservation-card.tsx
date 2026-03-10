@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, Clock, Users } from "lucide-react";
 import { cancelReservation } from "@/server/reservations/actions/cancel-reservation";
+import { APP_TIMEZONE } from "@/lib/date-utils";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   PENDING: "outline",
@@ -24,6 +25,7 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "
 
 const formatDateTime = (date: Date) => {
   return new Date(date).toLocaleString("en-US", {
+    timeZone: APP_TIMEZONE,
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -84,6 +86,7 @@ export const ReservationCard = ({
             <span>
               until{" "}
               {new Date(endTime).toLocaleTimeString("en-US", {
+                timeZone: APP_TIMEZONE,
                 hour: "2-digit",
                 minute: "2-digit",
               })}

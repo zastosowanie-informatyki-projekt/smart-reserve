@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { updateReservationStatus } from "@/server/reservations/actions/update-reservation-status";
 import { MoreHorizontal, Check, X, Clock, AlertTriangle } from "lucide-react";
+import { APP_TIMEZONE } from "@/lib/date-utils";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   PENDING: "outline",
@@ -30,6 +31,7 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "
 
 const formatDateTime = (date: Date) => {
   return new Date(date).toLocaleString("en-US", {
+    timeZone: APP_TIMEZONE,
     month: "short",
     day: "numeric",
     hour: "2-digit",
