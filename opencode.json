@@ -1,0 +1,7 @@
+{
+  "instructions": [
+    ".github/instructions/architecture.instructions.md",
+    ".github/instructions/backend.instructions.md",
+    ".github/instructions/frontend.instructions.md"
+  ]
+}
