@@ -7,10 +7,10 @@ import { invitationService } from "../services/invitation.service";
 
 export async function sendInvitation(
   formData: FormData,
-): Promise<ActionResult<{ token: string }>> {
+): Promise<ActionResult<{ id: string }>> {
   const parsed = sendInvitationSchema.safeParse({
     restaurantId: formData.get("restaurantId"),
-    email: formData.get("email"),
+    userId: formData.get("userId"),
   });
 
   if (!parsed.success) {
@@ -20,7 +20,7 @@ export async function sendInvitation(
   try {
     const invitation = await invitationService.send(parsed.data);
     revalidatePath(`/dashboard/${parsed.data.restaurantId}`);
-    return { success: true, data: { token: invitation.token } };
+    return { success: true, data: { id: invitation.id } };
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to send invitation";

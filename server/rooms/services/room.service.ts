@@ -45,6 +45,7 @@ export const roomService = {
   },
 
   async findByRestaurantId(restaurantId: string) {
+    await authService.requireAuth();
     return roomRepository.findByRestaurantId(restaurantId);
   },
 };

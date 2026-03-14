@@ -1,31 +1,31 @@
 import { prisma } from "@/lib/prisma";
 
 export const invitationRepository = {
-  async create(data: { restaurantId: string; email: string; expiresAt: Date }) {
+  async create(data: { restaurantId: string; userId: string }) {
     return prisma.employeeInvitation.create({
       data,
       select: {
         id: true,
-        email: true,
-        token: true,
-        expiresAt: true,
+        userId: true,
         createdAt: true,
         restaurant: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true, email: true } },
       },
     });
   },
 
-  async findByToken(token: string) {
+  async findById(id: string) {
     return prisma.employeeInvitation.findUnique({
-      where: { token },
+      where: { id },
       select: {
         id: true,
-        email: true,
-        token: true,
-        expiresAt: true,
-        acceptedAt: true,
+        userId: true,
         restaurantId: true,
-        restaurant: { select: { id: true, name: true } },
+        acceptedAt: true,
+        declinedAt: true,
+        createdAt: true,
+        restaurant: { select: { id: true, name: true, ownerId: true } },
+        user: { select: { id: true, name: true, email: true } },
       },
     });
   },
@@ -35,16 +35,50 @@ export const invitationRepository = {
       where: {
         restaurantId,
         acceptedAt: null,
-        expiresAt: { gt: new Date() },
+        declinedAt: null,
       },
       select: {
         id: true,
-        email: true,
-        token: true,
-        expiresAt: true,
         createdAt: true,
+        user: { select: { id: true, name: true, email: true, image: true } },
       },
       orderBy: { createdAt: "desc" },
+    });
+  },
+
+  async findPendingByUser(userId: string) {
+    return prisma.employeeInvitation.findMany({
+      where: {
+        userId,
+        acceptedAt: null,
+        declinedAt: null,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        restaurant: {
+          select: {
+            id: true,
+            name: true,
+            city: true,
+            cuisine: true,
+            imageUrl: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+
+  async findPendingByUserAndRestaurant(userId: string, restaurantId: string) {
+    return prisma.employeeInvitation.findFirst({
+      where: {
+        userId,
+        restaurantId,
+        acceptedAt: null,
+        declinedAt: null,
+      },
+      select: { id: true },
     });
   },
 
@@ -52,7 +86,15 @@ export const invitationRepository = {
     return prisma.employeeInvitation.update({
       where: { id },
       data: { acceptedAt: new Date() },
-      select: { id: true, email: true, restaurantId: true },
+      select: { id: true, userId: true, restaurantId: true },
+    });
+  },
+
+  async decline(id: string) {
+    return prisma.employeeInvitation.update({
+      where: { id },
+      data: { declinedAt: new Date() },
+      select: { id: true },
     });
   },
 
@@ -63,15 +105,21 @@ export const invitationRepository = {
     });
   },
 
-  async findPendingByEmailAndRestaurant(email: string, restaurantId: string) {
-    return prisma.employeeInvitation.findFirst({
+  async searchUsersToInvite(query: string, restaurantId: string) {
+    return prisma.user.findMany({
       where: {
-        email,
-        restaurantId,
-        acceptedAt: null,
-        expiresAt: { gt: new Date() },
+        role: "EMPLOYEE",
+        OR: [
+          { name: { contains: query, mode: "insensitive" } },
+          { email: { contains: query, mode: "insensitive" } },
+        ],
+        employeeAt: { none: { restaurantId } },
+        receivedInvitations: {
+          none: { restaurantId, acceptedAt: null, declinedAt: null },
+        },
       },
-      select: { id: true },
+      select: { id: true, name: true, email: true, image: true },
+      take: 10,
     });
   },
 };

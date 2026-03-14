@@ -52,6 +52,7 @@ export const tableService = {
   },
 
   async findByRestaurantId(restaurantId: string) {
+    await authService.requireAuth();
     return tableRepository.findByRestaurantId(restaurantId);
   },
 

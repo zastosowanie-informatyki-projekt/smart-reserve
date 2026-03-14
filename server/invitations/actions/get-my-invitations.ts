@@ -3,29 +3,26 @@
 import type { ActionResult } from "@/lib/types";
 import { invitationService } from "../services/invitation.service";
 
-export async function getInvitations(
-  restaurantId: string,
-): Promise<
+export async function getMyInvitations(): Promise<
   ActionResult<
     Array<{
       id: string;
       createdAt: Date;
-      user: {
+      restaurant: {
         id: string;
         name: string;
-        email: string;
-        image: string | null;
+        city: string;
+        cuisine: string | null;
+        imageUrl: string | null;
       };
     }>
   >
 > {
   try {
-    const invitations = await invitationService.getForRestaurant(restaurantId);
+    const invitations = await invitationService.getMyInvitations();
     return { success: true, data: invitations };
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to get invitations";
     console.error("Failed to get invitations:", error);
-    return { success: false, error: message };
+    return { success: false, error: "Failed to get your invitations" };
   }
 }

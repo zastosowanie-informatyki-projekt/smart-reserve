@@ -5,10 +5,10 @@ import type { ActionResult } from "@/lib/types";
 import { invitationService } from "../services/invitation.service";
 
 export async function acceptInvitation(
-  token: string,
+  id: string,
 ): Promise<ActionResult<{ restaurantId: string; restaurantName: string }>> {
   try {
-    const result = await invitationService.accept(token);
+    const result = await invitationService.accept(id);
     revalidatePath("/");
     return { success: true, data: result };
   } catch (error) {

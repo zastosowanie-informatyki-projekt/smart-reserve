@@ -22,17 +22,6 @@ export const employeeRepository = {
     });
   },
 
-  async existsByEmailAndRestaurant(email: string, restaurantId: string) {
-    const record = await prisma.restaurantEmployee.findFirst({
-      where: {
-        restaurantId,
-        user: { email },
-      },
-      select: { id: true },
-    });
-    return record !== null;
-  },
-
   async existsByUserAndRestaurant(userId: string, restaurantId: string) {
     const record = await prisma.restaurantEmployee.findUnique({
       where: { userId_restaurantId: { userId, restaurantId } },
@@ -41,16 +30,11 @@ export const employeeRepository = {
     return record !== null;
   },
 
-  async createWithRoleUpdate(userId: string, restaurantId: string) {
-    await prisma.$transaction([
-      prisma.restaurantEmployee.create({
-        data: { userId, restaurantId },
-      }),
-      prisma.user.update({
-        where: { id: userId },
-        data: { role: "EMPLOYEE" },
-      }),
-    ]);
+  async create(userId: string, restaurantId: string) {
+    return prisma.restaurantEmployee.create({
+      data: { userId, restaurantId },
+      select: { id: true },
+    });
   },
 
   async findRestaurantsByUserId(userId: string) {

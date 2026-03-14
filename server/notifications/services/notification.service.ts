@@ -53,7 +53,14 @@ export const notificationService = {
     return notificationRepository.countUnread(userId);
   },
 
-  async markAsRead(id: string) {
+  async markAsRead(id: string, userId: string) {
+    const notification = await notificationRepository.findById(id);
+    if (!notification) {
+      throw new Error("Notification not found");
+    }
+    if (notification.userId !== userId) {
+      throw new Error("You can only mark your own notifications as read");
+    }
     return notificationRepository.markAsRead(id);
   },
 

@@ -31,12 +31,13 @@ model User {
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
   role          UserRole             @default(USER)
-  sessions      Session[]
-  accounts      Account[]
-  restaurants   Restaurant[]
-  reservations  Reservation[]
-  notifications Notification[]
-  employeeAt    RestaurantEmployee[]
+  sessions            Session[]
+  accounts            Account[]
+  restaurants         Restaurant[]
+  reservations        Reservation[]
+  notifications       Notification[]
+  employeeAt          RestaurantEmployee[]
+  receivedInvitations EmployeeInvitation[]
 
   @@unique([email])
   @@map("user")
@@ -212,15 +213,16 @@ model RestaurantEmployee {
 
 model EmployeeInvitation {
   id           String     @id @default(cuid())
-  email        String
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  token        String     @unique @default(cuid())
-  expiresAt    DateTime
   acceptedAt   DateTime?
+  declinedAt   DateTime?
   createdAt    DateTime   @default(now())
 
-  @@index([email])
+  @@unique([userId, restaurantId])
+  @@index([userId])
   @@index([restaurantId])
   @@map("employee_invitation")
 }
