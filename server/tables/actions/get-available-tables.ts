@@ -1,7 +1,7 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/lib/types";
+import { tableService } from "../services/table.service";
 
 export async function getAvailableTables(input: {
   restaurantId: string;
@@ -19,47 +19,12 @@ export async function getAvailableTables(input: {
   >
 > {
   try {
-    const startTime = new Date(input.startTime);
-    const endTime = new Date(input.endTime);
-
-    if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
-      return { success: false, error: "Invalid date format" };
-    }
-    if (startTime >= endTime) {
-      return { success: false, error: "Start time must be before end time" };
-    }
-    if (startTime < new Date()) {
-      return { success: false, error: "Cannot search for times in the past" };
-    }
-    if (input.guestCount < 1) {
-      return { success: false, error: "Guest count must be at least 1" };
-    }
-
-    const tables = await prisma.restaurantTable.findMany({
-      where: {
-        room: { restaurantId: input.restaurantId },
-        isActive: true,
-        capacity: { gte: input.guestCount },
-        reservations: {
-          none: {
-            status: { notIn: ["CANCELLED", "NO_SHOW"] },
-            startTime: { lt: endTime },
-            endTime: { gt: startTime },
-          },
-        },
-      },
-      select: {
-        id: true,
-        label: true,
-        capacity: true,
-        description: true,
-      },
-      orderBy: { capacity: "asc" },
-    });
-
+    const tables = await tableService.findAvailable(input);
     return { success: true, data: tables };
   } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to search for available tables";
     console.error("Failed to get available tables:", error);
-    return { success: false, error: "Failed to search for available tables" };
+    return { success: false, error: message };
   }
 }

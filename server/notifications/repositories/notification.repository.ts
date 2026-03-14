@@ -70,4 +70,15 @@ export const notificationRepository = {
       data: { read: true },
     });
   },
+
+  async findById(id: string) {
+    return prisma.notification.findUnique({
+      where: { id },
+      select: { id: true, userId: true },
+    });
+  },
+
+  async delete(id: string) {
+    return prisma.notification.delete({ where: { id } });
+  },
 };

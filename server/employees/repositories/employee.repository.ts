@@ -1,38 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
 export const employeeRepository = {
-  async searchAvailableEmployees(query: string, restaurantId: string) {
-    return prisma.user.findMany({
-      where: {
-        role: "EMPLOYEE",
-        OR: [
-          { name: { contains: query, mode: "insensitive" } },
-          { email: { contains: query, mode: "insensitive" } },
-        ],
-        employeeAt: {
-          none: { restaurantId },
-        },
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-      },
-      take: 10,
-    });
-  },
-
-  async addEmployee(userId: string, restaurantId: string) {
-    return prisma.restaurantEmployee.create({
-      data: { userId, restaurantId },
-      select: {
-        id: true,
-        user: { select: { id: true, name: true, email: true, image: true } },
-      },
-    });
-  },
-
   async findByRestaurantId(restaurantId: string) {
     return prisma.restaurantEmployee.findMany({
       where: { restaurantId },
@@ -51,6 +19,57 @@ export const employeeRepository = {
     return prisma.restaurantEmployee.delete({
       where: { id },
       select: { userId: true, restaurantId: true },
+    });
+  },
+
+  async existsByEmailAndRestaurant(email: string, restaurantId: string) {
+    const record = await prisma.restaurantEmployee.findFirst({
+      where: {
+        restaurantId,
+        user: { email },
+      },
+      select: { id: true },
+    });
+    return record !== null;
+  },
+
+  async existsByUserAndRestaurant(userId: string, restaurantId: string) {
+    const record = await prisma.restaurantEmployee.findUnique({
+      where: { userId_restaurantId: { userId, restaurantId } },
+      select: { id: true },
+    });
+    return record !== null;
+  },
+
+  async createWithRoleUpdate(userId: string, restaurantId: string) {
+    await prisma.$transaction([
+      prisma.restaurantEmployee.create({
+        data: { userId, restaurantId },
+      }),
+      prisma.user.update({
+        where: { id: userId },
+        data: { role: "EMPLOYEE" },
+      }),
+    ]);
+  },
+
+  async findRestaurantsByUserId(userId: string) {
+    return prisma.restaurantEmployee.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        createdAt: true,
+        restaurant: {
+          select: {
+            id: true,
+            name: true,
+            city: true,
+            cuisine: true,
+            imageUrl: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
     });
   },
 };

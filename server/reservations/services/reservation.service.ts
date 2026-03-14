@@ -1,26 +1,15 @@
-import { prisma } from "@/lib/prisma";
 import { authService } from "@/server/auth/services/auth.service";
 import { tableRepository } from "@/server/tables/repositories/table.repository";
 import { restaurantRepository } from "@/server/restaurants/repositories/restaurant.repository";
 import { notificationService } from "@/server/notifications/services/notification.service";
 import { reservationRepository } from "../repositories/reservation.repository";
 import { formatTimeInAppTz, getDayOfWeekInAppTz } from "@/lib/date-utils";
-import type { CreateReservationInput } from "../types";
+import type { CreateReservationInput, UpdateReservationInput } from "../types";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   PENDING: ["CONFIRMED", "CANCELLED"],
   CONFIRMED: ["CANCELLED", "COMPLETED", "NO_SHOW"],
 };
-
-async function autoCompleteExpired() {
-  await prisma.reservation.updateMany({
-    where: {
-      status: "CONFIRMED",
-      endTime: { lt: new Date() },
-    },
-    data: { status: "COMPLETED" },
-  });
-}
 
 export const reservationService = {
   async create(data: CreateReservationInput) {
@@ -89,6 +78,72 @@ export const reservationService = {
     return reservation;
   },
 
+  async update(data: UpdateReservationInput) {
+    const session = await authService.requireAuth();
+    const existing = await reservationRepository.findById(data.id);
+
+    if (!existing) {
+      throw new Error("Reservation not found");
+    }
+    if (existing.userId !== session.user.id) {
+      throw new Error("You can only edit your own reservations");
+    }
+    if (existing.status !== "PENDING" && existing.status !== "CONFIRMED") {
+      throw new Error("Only pending or confirmed reservations can be edited");
+    }
+
+    const startTime = data.startTime ?? existing.startTime;
+    const endTime = data.endTime ?? existing.endTime;
+    const guestCount = data.guestCount ?? existing.guestCount;
+
+    if (startTime >= endTime) {
+      throw new Error("Start time must be before end time");
+    }
+    if (startTime < new Date()) {
+      throw new Error("Cannot set a reservation time in the past");
+    }
+
+    const table = await tableRepository.findById(existing.tableId);
+    if (!table || !table.isActive) {
+      throw new Error("This table is not available");
+    }
+    if (guestCount > table.capacity) {
+      throw new Error(`Guest count exceeds table capacity of ${table.capacity}`);
+    }
+
+    const openingHours = await restaurantRepository.findOpeningHours(existing.restaurantId);
+    if (openingHours.length > 0) {
+      const adjustedDay = getDayOfWeekInAppTz(startTime);
+      const dayHours = openingHours.find((h) => h.dayOfWeek === adjustedDay);
+
+      if (dayHours?.isClosed) {
+        throw new Error("Restaurant is closed on this day");
+      }
+
+      if (dayHours) {
+        const startTimeStr = formatTimeInAppTz(startTime);
+        const endTimeStr = formatTimeInAppTz(endTime);
+        if (startTimeStr < dayHours.openTime || endTimeStr > dayHours.closeTime) {
+          throw new Error(
+            `Reservation must be within opening hours: ${dayHours.openTime} - ${dayHours.closeTime}`,
+          );
+        }
+      }
+    }
+
+    const overlap = await reservationRepository.findOverlapping(
+      existing.tableId,
+      startTime,
+      endTime,
+      data.id,
+    );
+    if (overlap) {
+      throw new Error("This table is already reserved for the selected time");
+    }
+
+    return reservationRepository.update({ ...data, startTime, endTime, guestCount });
+  },
+
   async cancel(id: string) {
     const session = await authService.requireAuth();
     const reservation = await reservationRepository.findById(id);
@@ -147,16 +202,32 @@ export const reservationService = {
     return result;
   },
 
+  async findById(id: string) {
+    const session = await authService.requireAuth();
+    const reservation = await reservationRepository.findById(id);
+
+    if (!reservation) {
+      throw new Error("Reservation not found");
+    }
+
+    const isGuest = reservation.userId === session.user.id;
+    if (!isGuest) {
+      await authService.requireRestaurantAccess(session.user.id, reservation.restaurantId);
+    }
+
+    return reservation;
+  },
+
   async findByUserId() {
     const session = await authService.requireAuth();
-    await autoCompleteExpired();
+    await reservationRepository.completeExpired();
     return reservationRepository.findByUserId(session.user.id);
   },
 
   async findByRestaurantId(restaurantId: string, filters?: { from?: Date; to?: Date }) {
     const session = await authService.requireAuth();
     await authService.requireRestaurantAccess(session.user.id, restaurantId);
-    await autoCompleteExpired();
+    await reservationRepository.completeExpired();
     return reservationRepository.findByRestaurantId(restaurantId, filters);
   },
 };

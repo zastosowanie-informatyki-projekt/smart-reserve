@@ -60,4 +60,15 @@ export const notificationService = {
   async markAllAsRead(userId: string) {
     return notificationRepository.markAllAsRead(userId);
   },
+
+  async delete(id: string, userId: string) {
+    const notification = await notificationRepository.findById(id);
+    if (!notification) {
+      throw new Error("Notification not found");
+    }
+    if (notification.userId !== userId) {
+      throw new Error("You can only delete your own notifications");
+    }
+    return notificationRepository.delete(id);
+  },
 };

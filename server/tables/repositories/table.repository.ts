@@ -92,4 +92,33 @@ export const tableRepository = {
       orderBy: { label: "asc" },
     });
   },
+
+  async findAvailable(
+    restaurantId: string,
+    startTime: Date,
+    endTime: Date,
+    guestCount: number,
+  ) {
+    return prisma.restaurantTable.findMany({
+      where: {
+        room: { restaurantId },
+        isActive: true,
+        capacity: { gte: guestCount },
+        reservations: {
+          none: {
+            status: { notIn: ["CANCELLED", "NO_SHOW"] },
+            startTime: { lt: endTime },
+            endTime: { gt: startTime },
+          },
+        },
+      },
+      select: {
+        id: true,
+        label: true,
+        capacity: true,
+        description: true,
+      },
+      orderBy: { capacity: "asc" },
+    });
+  },
 };

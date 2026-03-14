@@ -54,4 +54,34 @@ export const tableService = {
   async findByRestaurantId(restaurantId: string) {
     return tableRepository.findByRestaurantId(restaurantId);
   },
+
+  async findAvailable(input: {
+    restaurantId: string;
+    startTime: string;
+    endTime: string;
+    guestCount: number;
+  }) {
+    const startTime = new Date(input.startTime);
+    const endTime = new Date(input.endTime);
+
+    if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+      throw new Error("Invalid date format");
+    }
+    if (startTime >= endTime) {
+      throw new Error("Start time must be before end time");
+    }
+    if (startTime < new Date()) {
+      throw new Error("Cannot search for times in the past");
+    }
+    if (input.guestCount < 1) {
+      throw new Error("Guest count must be at least 1");
+    }
+
+    return tableRepository.findAvailable(
+      input.restaurantId,
+      startTime,
+      endTime,
+      input.guestCount,
+    );
+  },
 };

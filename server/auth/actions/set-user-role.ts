@@ -1,21 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/lib/types";
 import { authService } from "../services/auth.service";
+import { authRepository } from "../repositories/auth.repository";
 
 export async function setUserRole(
   role: "USER" | "RESTAURANT_OWNER" | "EMPLOYEE",
 ): Promise<ActionResult> {
   try {
     const session = await authService.requireAuth();
-
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { role, onboarded: true },
-    });
-
+    await authRepository.updateUserRole(session.user.id, role, true);
     revalidatePath("/", "layout");
     return { success: true, data: undefined };
   } catch (error) {

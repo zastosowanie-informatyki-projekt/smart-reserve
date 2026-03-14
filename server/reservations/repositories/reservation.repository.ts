@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { ReservationStatus } from "@/app/generated/prisma/client";
-import type { CreateReservationInput } from "../types";
+import type { CreateReservationInput, UpdateReservationInput } from "../types";
 
 export const reservationRepository = {
   async create(data: CreateReservationInput & { userId: string }) {
@@ -96,6 +96,26 @@ export const reservationRepository = {
     });
   },
 
+  async update(data: UpdateReservationInput) {
+    const { id, ...rest } = data;
+    return prisma.reservation.update({
+      where: { id },
+      data: rest,
+      select: {
+        id: true,
+        startTime: true,
+        endTime: true,
+        guestCount: true,
+        status: true,
+        notes: true,
+        tableId: true,
+        restaurantId: true,
+        userId: true,
+        createdAt: true,
+      },
+    });
+  },
+
   async updateStatus(id: string, status: ReservationStatus) {
     return prisma.reservation.update({
       where: { id },
@@ -104,6 +124,16 @@ export const reservationRepository = {
         id: true,
         status: true,
       },
+    });
+  },
+
+  async completeExpired() {
+    return prisma.reservation.updateMany({
+      where: {
+        status: "CONFIRMED",
+        endTime: { lt: new Date() },
+      },
+      data: { status: "COMPLETED" },
     });
   },
 

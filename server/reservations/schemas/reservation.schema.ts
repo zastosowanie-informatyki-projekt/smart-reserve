@@ -13,3 +13,11 @@ export const updateReservationStatusSchema = z.object({
   id: z.string().min(1, "Reservation ID is required"),
   status: z.enum(["CONFIRMED", "CANCELLED", "COMPLETED", "NO_SHOW"]),
 });
+
+export const updateReservationSchema = z.object({
+  id: z.string().min(1, "Reservation ID is required"),
+  startTime: z.coerce.date().optional(),
+  endTime: z.coerce.date().optional(),
+  guestCount: z.number().int().positive("Guest count must be at least 1").optional(),
+  notes: z.string().optional(),
+});
