@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getRestaurant } from "@/server/restaurants/actions/get-restaurant";
+import { getFloorPlan } from "@/server/rooms/actions/get-floor-plan";
 import { Separator } from "@/components/ui/separator";
 import { RestaurantInfo } from "./_components/restaurant-info";
 import { OpeningHoursDisplay } from "./_components/opening-hours-display";
@@ -14,8 +15,9 @@ export default async function RestaurantDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [restaurantResult, session] = await Promise.all([
+  const [restaurantResult, floorPlanResult, session] = await Promise.all([
     getRestaurant(id),
+    getFloorPlan(id),
     auth.api.getSession({ headers: await headers() }),
   ]);
 
@@ -24,6 +26,7 @@ export default async function RestaurantDetailPage({
   }
 
   const restaurant = restaurantResult.data;
+  const floorPlan = floorPlanResult.success ? floorPlanResult.data : [];
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
@@ -56,6 +59,7 @@ export default async function RestaurantDetailPage({
           restaurantId={id}
           isAuthenticated={!!session}
           openingHours={restaurant.openingHours}
+          floorPlan={floorPlan}
         />
       </div>
     </div>

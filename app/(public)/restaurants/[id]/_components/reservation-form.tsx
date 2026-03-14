@@ -11,9 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { getAvailableTables } from "@/server/tables/actions/get-available-tables";
 import { createReservation } from "@/server/reservations/actions/create-reservation";
-import { TableList } from "./table-list";
+import { FloorPlanViewer } from "./floor-plan-viewer";
 import { Search, AlertCircle } from "lucide-react";
 import { toUTC } from "@/lib/date-utils";
+import type { RoomWithFloorPlan } from "@/server/rooms/types";
 
 type OpeningHoursEntry = {
   dayOfWeek: number;
@@ -49,10 +50,12 @@ export const ReservationForm = ({
   restaurantId,
   isAuthenticated,
   openingHours,
+  floorPlan,
 }: {
   restaurantId: string;
   isAuthenticated: boolean;
   openingHours: OpeningHoursEntry[];
+  floorPlan: RoomWithFloorPlan[];
 }) => {
   const router = useRouter();
   const [isSearching, startSearchTransition] = useTransition();
@@ -170,6 +173,13 @@ export const ReservationForm = ({
   }
 
   const today = new Date().toISOString().split("T")[0];
+
+  // Build a set of available table IDs for the floor plan viewer
+  const availableTableIds = new Set(availableTables?.map((t) => t.id) ?? []);
+
+  // Only show the floor plan viewer when there is a floor plan and search results
+  const hasFloorPlan =
+    floorPlan.length > 0 && floorPlan.some((r) => (r.floorPlan?.elements.length ?? 0) > 0);
 
   return (
     <Card>
@@ -329,11 +339,39 @@ export const ReservationForm = ({
               <form onSubmit={handleBook} className="flex flex-col gap-4">
                 <div className="flex flex-col gap-3">
                   <Label>Available Tables ({availableTables.length} found)</Label>
-                  <TableList
-                    tables={availableTables}
-                    selectedTableId={selectedTableId}
-                    onSelect={setSelectedTableId}
-                  />
+
+                  {hasFloorPlan ? (
+                    <FloorPlanViewer
+                      rooms={floorPlan}
+                      availableTableIds={availableTableIds}
+                      selectedTableId={selectedTableId}
+                      onSelect={setSelectedTableId}
+                    />
+                  ) : (
+                    // Fallback: simple list when no floor plan exists
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {availableTables.map((table) => (
+                        <button
+                          key={table.id}
+                          type="button"
+                          onClick={() => setSelectedTableId(table.id)}
+                          className={`rounded-lg border p-4 text-left transition-colors ${
+                            selectedTableId === table.id
+                              ? "border-primary bg-primary/5"
+                              : "hover:border-primary/50"
+                          }`}
+                        >
+                          <p className="font-medium">{table.label}</p>
+                          {table.description && (
+                            <p className="text-xs text-muted-foreground">{table.description}</p>
+                          )}
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Capacity: {table.capacity}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
