@@ -1,4 +1,5 @@
 import { authService } from "@/server/auth/services/auth.service";
+import { reservationRepository } from "@/server/reservations/repositories/reservation.repository";
 import { roomRepository } from "../repositories/room.repository";
 import type {
   CreateRoomInput,
@@ -36,7 +37,7 @@ export const roomService = {
     return roomRepository.update(data);
   },
 
-  async delete(id: string) {
+  async delete(id: string, force = false) {
     const session = await authService.requireAuth();
     const room = await roomRepository.findById(id);
 
@@ -48,6 +49,13 @@ export const roomService = {
       session.user.id,
       room.restaurantId,
     );
+
+    if (!force) {
+      const upcomingCount = await reservationRepository.countUpcomingByRoomId(id);
+      if (upcomingCount > 0) {
+        throw new Error(`UPCOMING_RESERVATIONS:${upcomingCount}`);
+      }
+    }
 
     return roomRepository.delete(id);
   },

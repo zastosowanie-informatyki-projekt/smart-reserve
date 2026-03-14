@@ -4,7 +4,15 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { DoorOpen, Pencil, Trash2, Check, X, Plus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { DoorOpen, Pencil, Trash2, Check, X, Plus, Loader2 } from "lucide-react";
 import { createRoom } from "@/server/rooms/actions/create-room";
 import { updateRoom } from "@/server/rooms/actions/update-room";
 import { deleteRoom } from "@/server/rooms/actions/delete-room";
@@ -50,6 +58,14 @@ export const RoomSelector = ({
   const [addError, setAddError] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
 
+  // Confirm-delete dialog state
+  const [pendingDelete, setPendingDelete] = useState<{
+    roomId: string;
+    roomName: string;
+    upcomingCount: number;
+  } | null>(null);
+  const [isForceDeleting, startForceDeleteTransition] = useTransition();
+
   // ── Rename ────────────────────────────────────────────────────────────────
 
   const handleStartRename = (room: RoomEntry) => {
@@ -88,6 +104,28 @@ export const RoomSelector = ({
     startTransition(async () => {
       const result = await deleteRoom(roomId);
       if (!result.success) return;
+      if (result.data.upcomingReservations && result.data.upcomingReservations > 0) {
+        const room = rooms.find((r) => r.id === roomId);
+        setPendingDelete({
+          roomId,
+          roomName: room?.name ?? "this room",
+          upcomingCount: result.data.upcomingReservations,
+        });
+        return;
+      }
+      const next = rooms.filter((r) => r.id !== roomId);
+      onRoomsChanged(next);
+      if (roomId === activeRoomId) onActiveRoomDeleted();
+    });
+  };
+
+  const handleForceDelete = () => {
+    if (!pendingDelete) return;
+    const { roomId } = pendingDelete;
+    startForceDeleteTransition(async () => {
+      const result = await deleteRoom(roomId, true);
+      if (!result.success) return;
+      setPendingDelete(null);
       const next = rooms.filter((r) => r.id !== roomId);
       onRoomsChanged(next);
       if (roomId === activeRoomId) onActiveRoomDeleted();
@@ -345,6 +383,38 @@ export const RoomSelector = ({
           Click anywhere on the canvas to place a new table.
         </p>
       )}
+
+      {/* Confirm-delete dialog — shown when room has upcoming reservations */}
+      <Dialog open={!!pendingDelete} onOpenChange={(open) => { if (!open) setPendingDelete(null); }}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Delete room with active reservations?</DialogTitle>
+            <DialogDescription>
+              <strong>{pendingDelete?.roomName}</strong> has{" "}
+              <strong>{pendingDelete?.upcomingCount}</strong> upcoming{" "}
+              {pendingDelete?.upcomingCount === 1 ? "reservation" : "reservations"} that will be
+              permanently deleted along with the room and all its tables. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPendingDelete(null)}
+              disabled={isForceDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleForceDelete}
+              disabled={isForceDeleting}
+            >
+              {isForceDeleting && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+              Delete anyway
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

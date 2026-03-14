@@ -137,6 +137,16 @@ export const reservationRepository = {
     });
   },
 
+  async countUpcomingByRoomId(roomId: string) {
+    return prisma.reservation.count({
+      where: {
+        table: { roomId },
+        status: { notIn: ["CANCELLED", "NO_SHOW", "COMPLETED"] },
+        endTime: { gt: new Date() },
+      },
+    });
+  },
+
   async findOverlapping(
     tableId: string,
     startTime: Date,
