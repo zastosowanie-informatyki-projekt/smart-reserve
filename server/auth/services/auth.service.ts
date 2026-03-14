@@ -19,6 +19,18 @@ export const authService = {
     return session;
   },
 
+  async requireRole(role: "USER" | "RESTAURANT_OWNER" | "EMPLOYEE"): Promise<Session> {
+    const session = await this.requireAuth();
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true },
+    });
+    if (!user || user.role !== role) {
+      throw new Error(`Only users with the ${role} role can perform this action`);
+    }
+    return session;
+  },
+
   async requireRestaurantOwner(
     userId: string,
     restaurantId: string,

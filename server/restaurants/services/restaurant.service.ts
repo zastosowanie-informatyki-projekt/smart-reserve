@@ -1,4 +1,3 @@
-import { prisma } from "@/lib/prisma";
 import { authService } from "@/server/auth/services/auth.service";
 import { restaurantRepository } from "../repositories/restaurant.repository";
 import type {
@@ -9,24 +8,8 @@ import type {
 
 export const restaurantService = {
   async create(data: CreateRestaurantInput) {
-    const session = await authService.requireAuth();
-
-    const restaurant = await restaurantRepository.create({
-      ...data,
-      ownerId: session.user.id,
-    });
-
-    const existingCount = await restaurantRepository.countByOwnerId(
-      session.user.id,
-    );
-    if (existingCount === 1) {
-      await prisma.user.update({
-        where: { id: session.user.id },
-        data: { role: "RESTAURANT_OWNER" },
-      });
-    }
-
-    return restaurant;
+    const session = await authService.requireRole("RESTAURANT_OWNER");
+    return restaurantRepository.create({ ...data, ownerId: session.user.id });
   },
 
   async update(data: UpdateRestaurantInput) {

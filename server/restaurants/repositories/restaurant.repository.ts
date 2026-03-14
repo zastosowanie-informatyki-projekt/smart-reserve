@@ -168,7 +168,4 @@ export const restaurantRepository = {
     );
   },
 
-  async countByOwnerId(ownerId: string) {
-    return prisma.restaurant.count({ where: { ownerId } });
-  },
 };
