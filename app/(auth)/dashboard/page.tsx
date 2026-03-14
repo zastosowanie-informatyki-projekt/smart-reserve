@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { prisma } from "@/lib/prisma";
 import { getMyRestaurants } from "@/server/restaurants/actions/get-my-restaurants";
+import { getMyEmployeeRestaurants } from "@/server/employees/actions/get-my-employee-restaurants";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
@@ -22,20 +22,15 @@ export default async function DashboardPage() {
     redirect("/");
   }
 
-  const [result, employeeRestaurants] = await Promise.all([
+  const [ownedResult, employeeResult] = await Promise.all([
     getMyRestaurants(),
-    prisma.restaurantEmployee.findMany({
-      where: { userId: session.user.id },
-      select: {
-        restaurant: {
-          select: { id: true, name: true, city: true, cuisine: true },
-        },
-      },
-    }),
+    getMyEmployeeRestaurants(),
   ]);
 
-  const restaurants = result.success ? result.data : [];
-  const employeeList = employeeRestaurants.map((e) => e.restaurant);
+  const restaurants = ownedResult.success ? ownedResult.data : [];
+  const employeeList = employeeResult.success
+    ? employeeResult.data.map((r) => r.restaurant)
+    : [];
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">

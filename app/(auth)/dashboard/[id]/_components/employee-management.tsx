@@ -3,7 +3,6 @@
 import { useState, useEffect, useTransition, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -11,11 +10,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { searchEmployees } from "@/server/employees/actions/search-employees";
-import { addEmployee } from "@/server/employees/actions/add-employee";
-import { removeEmployee } from "@/server/employees/actions/remove-employee";
+import { searchUsersToInvite } from "@/server/invitations/actions/search-users-to-invite";
+import { sendInvitation } from "@/server/invitations/actions/send-invitation";
+import { getInvitations } from "@/server/invitations/actions/get-invitations";
+import { revokeInvitation } from "@/server/invitations/actions/revoke-invitation";
 import { getEmployees } from "@/server/employees/actions/get-employees";
-import { Trash2, UserPlus, Search } from "lucide-react";
+import { removeEmployee } from "@/server/employees/actions/remove-employee";
+import { Trash2, UserPlus, Search, Mail } from "lucide-react";
 
 type Employee = {
   id: string;
@@ -30,25 +31,38 @@ type SearchResult = {
   image: string | null;
 };
 
+type PendingInvitation = {
+  id: string;
+  createdAt: Date;
+  user: { id: string; name: string; email: string; image: string | null };
+};
+
 export const EmployeeManagement = ({
   restaurantId,
 }: {
   restaurantId: string;
 }) => {
-
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [invitations, setInvitations] = useState<PendingInvitation[]>([]);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const refresh = () => {
     getEmployees(restaurantId).then((r) => {
       if (r.success) setEmployees(r.data);
     });
+    getInvitations(restaurantId).then((r) => {
+      if (r.success) setInvitations(r.data);
+    });
+  };
+
+  useEffect(() => {
+    refresh();
   }, [restaurantId]);
 
   useEffect(() => {
@@ -61,7 +75,7 @@ export const EmployeeManagement = ({
     }
 
     debounceRef.current = setTimeout(async () => {
-      const r = await searchEmployees(query, restaurantId);
+      const r = await searchUsersToInvite(query, restaurantId);
       if (r.success) {
         setResults(r.data);
         setShowResults(true);
@@ -86,27 +100,35 @@ export const EmployeeManagement = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleAdd = (userId: string) => {
+  const handleInvite = (userId: string) => {
     setError(null);
     startTransition(async () => {
-      const r = await addEmployee(userId, restaurantId);
+      const formData = new FormData();
+      formData.set("restaurantId", restaurantId);
+      formData.set("userId", userId);
+      const r = await sendInvitation(formData);
       if (r.success) {
         setQuery("");
         setResults([]);
         setShowResults(false);
-        const updated = await getEmployees(restaurantId);
-        if (updated.success) setEmployees(updated.data);
+        refresh();
       } else {
         setError(r.error);
       }
     });
   };
 
+  const handleRevoke = (invitationId: string) => {
+    startTransition(async () => {
+      const r = await revokeInvitation(invitationId, restaurantId);
+      if (r.success) refresh();
+    });
+  };
+
   const handleRemove = (employeeId: string) => {
     startTransition(async () => {
       await removeEmployee(employeeId, restaurantId);
-      const updated = await getEmployees(restaurantId);
-      if (updated.success) setEmployees(updated.data);
+      refresh();
     });
   };
 
@@ -115,7 +137,8 @@ export const EmployeeManagement = ({
       <CardHeader>
         <CardTitle>Team</CardTitle>
         <CardDescription>
-          Search and add employees to manage this restaurant
+          Invite employees to manage this restaurant. They must accept the
+          invitation first.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -159,12 +182,54 @@ export const EmployeeManagement = ({
           </div>
         )}
 
+        {invitations.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-medium">Pending Invitations</p>
+            {invitations.map((inv) => (
+              <div
+                key={inv.id}
+                className="flex items-center justify-between rounded-lg border border-dashed p-3"
+              >
+                <div className="flex items-center gap-3">
+                  {inv.user.image ? (
+                    <img
+                      src={inv.user.image}
+                      alt={inv.user.name}
+                      className="h-8 w-8 rounded-full"
+                    />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium">
+                      {inv.user.name[0]}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium">{inv.user.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {inv.user.email}
+                    </p>
+                  </div>
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRevoke(inv.id)}
+                  disabled={isPending}
+                  title="Revoke invitation"
+                >
+                  <Trash2 className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="flex flex-col gap-4 rounded-lg border p-4">
-          <p className="text-sm font-medium">Add Employee</p>
+          <p className="text-sm font-medium">Invite Employee</p>
           <div ref={containerRef} className="relative">
-            <Label htmlFor="employee-search" className="sr-only">
-              Search employees
-            </Label>
+            <label htmlFor="employee-search" className="sr-only">
+              Search employees to invite
+            </label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -172,7 +237,7 @@ export const EmployeeManagement = ({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => results.length > 0 && setShowResults(true)}
-                placeholder="Search by name or email..."
+                placeholder="Search by name or email (min 2 chars)..."
                 className="pl-9"
               />
             </div>
@@ -180,14 +245,14 @@ export const EmployeeManagement = ({
               <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-md">
                 {results.length === 0 ? (
                   <p className="p-3 text-center text-sm text-muted-foreground">
-                    No employees found
+                    No users found. They must have the Employee role.
                   </p>
                 ) : (
                   results.map((user) => (
                     <button
                       key={user.id}
                       type="button"
-                      onClick={() => handleAdd(user.id)}
+                      onClick={() => handleInvite(user.id)}
                       disabled={isPending}
                       className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-accent disabled:opacity-50"
                     >

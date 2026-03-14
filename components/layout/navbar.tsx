@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
+import { getMyRestaurants } from "@/server/restaurants/actions/get-my-restaurants";
+import { getMyEmployeeRestaurants } from "@/server/employees/actions/get-my-employee-restaurants";
 import { NavbarAuth } from "./navbar-auth";
 import { NotificationBell } from "./notification-bell";
 
@@ -12,11 +13,10 @@ export const Navbar = async () => {
 
   let hasRestaurants = false;
   if (session) {
-    const [ownedCount, employeeCount] = await Promise.all([
-      prisma.restaurant.count({ where: { ownerId: session.user.id } }),
-      prisma.restaurantEmployee.count({ where: { userId: session.user.id } }),
-    ]);
-    hasRestaurants = ownedCount > 0 || employeeCount > 0;
+    const [ownedResult, employeeResult] = await Promise.all([getMyRestaurants(), getMyEmployeeRestaurants()]);
+    const owned = ownedResult.success ? ownedResult.data : [];
+    const employee = employeeResult.success ? employeeResult.data : [];
+    hasRestaurants = owned.length > 0 || employee.length > 0;
   }
 
   return (
@@ -33,6 +33,14 @@ export const Navbar = async () => {
             >
               Browse Restaurants
             </Link>
+            {session && (
+              <Link
+                href="/invitations"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Invitations
+              </Link>
+            )}
           </nav>
         </div>
         <div className="flex items-center gap-2">
