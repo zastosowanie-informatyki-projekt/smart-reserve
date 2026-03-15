@@ -12,7 +12,8 @@ import { getNotifications } from "@/server/notifications/actions/get-notificatio
 import { getUnreadCount } from "@/server/notifications/actions/get-unread-count";
 import { markNotificationRead } from "@/server/notifications/actions/mark-notification-read";
 import { markAllRead } from "@/server/notifications/actions/mark-all-read";
-import { Bell, CheckCheck } from "lucide-react";
+import { deleteNotification } from "@/server/notifications/actions/delete-notification";
+import { Bell, CheckCheck, X } from "lucide-react";
 
 type Notification = {
   id: string;
@@ -71,6 +72,18 @@ export const NotificationBell = () => {
     });
   };
 
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const target = notifications.find((n) => n.id === id);
+    startTransition(async () => {
+      await deleteNotification(id);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      if (target && !target.read) {
+        setUnreadCount((c) => Math.max(0, c - 1));
+      }
+    });
+  };
+
   const formatTime = (date: Date) => {
     const d = new Date(date);
     const now = new Date();
@@ -121,29 +134,45 @@ export const NotificationBell = () => {
             </p>
           ) : (
             notifications.map((notification) => (
-              <button
+              <div
                 key={notification.id}
-                type="button"
-                onClick={() => handleClick(notification)}
-                className={`flex w-full flex-col gap-0.5 border-b px-4 py-3 text-left transition-colors last:border-0 hover:bg-accent ${
+                className={`group flex w-full items-start border-b last:border-0 ${
                   !notification.read ? "bg-accent/50" : ""
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  {!notification.read && (
-                    <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
-                  )}
-                  <span className="text-sm font-medium">
-                    {notification.title}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {notification.message}
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  {formatTime(notification.createdAt)}
-                </p>
-              </button>
+                {/* Clickable content area */}
+                <button
+                  type="button"
+                  onClick={() => handleClick(notification)}
+                  className="flex min-w-0 flex-1 flex-col gap-0.5 px-4 py-3 text-left transition-colors hover:bg-accent"
+                >
+                  <div className="flex items-center gap-2">
+                    {!notification.read && (
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
+                    )}
+                    <span className="text-sm font-medium">
+                      {notification.title}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {notification.message}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {formatTime(notification.createdAt)}
+                  </p>
+                </button>
+
+                {/* Delete button */}
+                <button
+                  type="button"
+                  onClick={(e) => handleDelete(e, notification.id)}
+                  disabled={isPending}
+                  title="Delete notification"
+                  className="m-2 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover:opacity-100 disabled:opacity-30"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
             ))
           )}
         </div>
