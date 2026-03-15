@@ -8,9 +8,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export const metadata = {
   title: "Profile | TableSpot",
+};
+
+const ROLE_LABEL: Record<string, string> = {
+  USER: "User",
+  RESTAURANT_OWNER: "Restaurant Owner",
+  EMPLOYEE: "Employee",
+};
+
+const ROLE_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
+  USER: "outline",
+  RESTAURANT_OWNER: "default",
+  EMPLOYEE: "secondary",
 };
 
 export default async function ProfilePage() {
@@ -21,6 +34,8 @@ export default async function ProfilePage() {
   if (!session) {
     redirect("/");
   }
+
+  const role = session.user.role;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -43,8 +58,13 @@ export default async function ProfilePage() {
                 className="h-16 w-16 rounded-full"
               />
             )}
-            <div>
-              <p className="text-lg font-medium">{session.user.name}</p>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <p className="text-lg font-medium">{session.user.name}</p>
+                <Badge variant={ROLE_VARIANT[role] ?? "outline"}>
+                  {ROLE_LABEL[role] ?? role}
+                </Badge>
+              </div>
               <p className="text-sm text-muted-foreground">
                 {session.user.email}
               </p>

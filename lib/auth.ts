@@ -1,6 +1,8 @@
 import { betterAuth } from "better-auth";
+import { customSession } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@/lib/prisma";
+import { userService } from "@/server/users/services/user.service";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -12,4 +14,16 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_SECRET!,
     },
   },
+  plugins: [
+    customSession(async ({ user, session }) => {
+      const role = await userService.getRole(user.id);
+      return {
+        user: {
+          ...user,
+          role,
+        },
+        session,
+      };
+    }),
+  ],
 });
