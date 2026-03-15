@@ -22,6 +22,8 @@ export default async function DashboardPage() {
     redirect("/");
   }
 
+  const isOwner = session.user.role === "RESTAURANT_OWNER";
+
   const [ownedResult, employeeResult] = await Promise.all([
     getMyRestaurants(),
     getMyEmployeeRestaurants(),
@@ -39,12 +41,14 @@ export default async function DashboardPage() {
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">Manage your restaurants</p>
         </div>
-        <Link href="/dashboard/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Restaurant
-          </Button>
-        </Link>
+        {isOwner && (
+          <Link href="/dashboard/new">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Restaurant
+            </Button>
+          </Link>
+        )}
       </div>
 
       {restaurants.length === 0 && employeeList.length === 0 ? (

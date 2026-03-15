@@ -7,4 +7,11 @@ export const userRepository = {
       select: { role: true },
     });
   },
+
+  async findOnboardedById(id: string) {
+    return prisma.user.findUnique({
+      where: { id },
+      select: { onboarded: true },
+    });
+  },
 };

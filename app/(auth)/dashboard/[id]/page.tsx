@@ -6,7 +6,6 @@ import Link from "next/link";
 import { getRestaurant } from "@/server/restaurants/actions/get-restaurant";
 import { getRestaurantReservations } from "@/server/reservations/actions/get-restaurant-reservations";
 import { Separator } from "@/components/ui/separator";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EditRestaurantForm } from "./_components/edit-restaurant-form";
 import { OpeningHoursForm } from "./_components/opening-hours-form";
@@ -14,7 +13,6 @@ import { ReservationManagement } from "./_components/reservation-management";
 import { PhotoManagement } from "./_components/photo-management";
 import { EmployeeManagement } from "./_components/employee-management";
 import { LayoutDashboard } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export default async function ManageRestaurantPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth.api.getSession({
@@ -42,6 +40,8 @@ export default async function ManageRestaurantPage({ params }: { params: Promise
     redirect("/dashboard");
   }
 
+  const owner = !!isOwner;
+
   const [restaurantResult, reservationsResult] = await Promise.all([
     getRestaurant(id),
     getRestaurantReservations(id),
@@ -59,16 +59,38 @@ export default async function ManageRestaurantPage({ params }: { params: Promise
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Manage {restaurant.name}</h1>
         <p className="text-muted-foreground">
-          Edit details, set opening hours, manage your floor plan, and view reservations
+          {owner
+            ? "Edit details, set opening hours, manage your floor plan, and view reservations"
+            : "View floor plan and manage reservations"}
         </p>
       </div>
       <div className="flex flex-col gap-8">
-        <EditRestaurantForm restaurant={restaurant} />
-        <Separator />
-        <PhotoManagement restaurantId={id} photos={restaurant.photos} />
-        <Separator />
-        <OpeningHoursForm restaurantId={id} currentHours={restaurant.openingHours} />
-        <Separator />
+        {owner ? (
+          <>
+            <EditRestaurantForm restaurant={restaurant} />
+            <Separator />
+            <PhotoManagement restaurantId={id} photos={restaurant.photos} />
+            <Separator />
+            <OpeningHoursForm restaurantId={id} currentHours={restaurant.openingHours} />
+            <Separator />
+          </>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Restaurant Details</CardTitle>
+              <CardDescription>You are an employee of this restaurant</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-1.5 text-sm">
+              <p><span className="font-medium">Name:</span> {restaurant.name}</p>
+              {restaurant.cuisine && <p><span className="font-medium">Cuisine:</span> {restaurant.cuisine}</p>}
+              <p><span className="font-medium">Address:</span> {restaurant.address}, {restaurant.city}</p>
+              {restaurant.phone && <p><span className="font-medium">Phone:</span> {restaurant.phone}</p>}
+              {restaurant.email && <p><span className="font-medium">Email:</span> {restaurant.email}</p>}
+            </CardContent>
+          </Card>
+        )}
+
+        {!owner && <Separator />}
 
         {/* Floor Plan */}
         <Card>
@@ -86,7 +108,7 @@ export default async function ManageRestaurantPage({ params }: { params: Promise
 
         <Separator />
         <ReservationManagement reservations={reservations} />
-        {!!isOwner && (
+        {owner && (
           <>
             <Separator />
             <EmployeeManagement restaurantId={id} />

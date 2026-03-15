@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
   UtensilsCrossed,
@@ -11,7 +13,10 @@ import {
   Smartphone,
 } from "lucide-react";
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const isOwner = session?.user.role === "RESTAURANT_OWNER";
+
   return (
     <div className="flex flex-col">
       {/* Hero */}
@@ -52,12 +57,14 @@ export default function Home() {
                 Browse Restaurants
               </Button>
             </Link>
-            <Link href="/dashboard/new">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                <Plus className="mr-2 h-4 w-4" />
-                List Your Restaurant
-              </Button>
-            </Link>
+            {isOwner && (
+              <Link href="/dashboard/new">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                  <Plus className="mr-2 h-4 w-4" />
+                  List Your Restaurant
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -179,12 +186,14 @@ export default function Home() {
                 Browse Restaurants
               </Button>
             </Link>
-            <Link href="/dashboard/new">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                <Plus className="mr-2 h-4 w-4" />
-                List Your Restaurant
-              </Button>
-            </Link>
+            {isOwner && (
+              <Link href="/dashboard/new">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                  <Plus className="mr-2 h-4 w-4" />
+                  List Your Restaurant
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </section>
