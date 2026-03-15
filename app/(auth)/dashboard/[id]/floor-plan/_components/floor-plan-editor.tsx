@@ -4,7 +4,7 @@ import { useState, useCallback, useTransition } from "react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { saveFloorPlan } from "@/server/rooms/actions/save-floor-plan";
 import type { RoomWithFloorPlan } from "@/server/rooms/types";
@@ -381,11 +381,44 @@ export const FloorPlanEditor = ({
               Select a room from the sidebar to start editing its floor plan.
             </div>
           )}
-          <p className="mt-2 text-xs text-muted-foreground">
-            {activeTool === "select"
-              ? "Click a table to edit it. Drag to move. Use handles to resize or rotate."
-              : "Click on the canvas to place a new table."}
-          </p>
+          {(() => {
+            const selectedEl = selectedId
+              ? currentElements.find((e) => e.id === selectedId)
+              : null;
+
+            if (selectedEl?.type === "decoration") {
+              const label =
+                selectedEl.label === "DOOR"
+                  ? "Door"
+                  : selectedEl.label === "WINDOW"
+                    ? "Window"
+                    : "Decoration";
+              return (
+                <div className="mt-2 flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-1.5 text-xs">
+                  <span className="text-muted-foreground">
+                    Selected: <span className="font-medium text-foreground">{label}</span>
+                  </span>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="ml-auto h-6 px-2 text-xs"
+                    onClick={() => handleDeleteElement(selectedEl.id)}
+                  >
+                    <Trash2 className="mr-1 h-3 w-3" />
+                    Delete
+                  </Button>
+                </div>
+              );
+            }
+
+            return (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {activeTool === "select"
+                  ? "Click a table to edit it. Drag to move. Use handles to resize or rotate."
+                  : "Click on the canvas to place a new table."}
+              </p>
+            );
+          })()}
         </div>
       </div>
 
