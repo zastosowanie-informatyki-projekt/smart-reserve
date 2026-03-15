@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 const SKIP_PATHS = ["/onboarding", "/api/", "/_next", "/favicon.ico"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (SKIP_PATHS.some((p) => pathname.startsWith(p))) {

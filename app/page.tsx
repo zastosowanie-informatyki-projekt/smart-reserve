@@ -21,7 +21,7 @@ export default function Home() {
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center"
         >
-          <div className="h-[600px] w-[900px] rounded-full bg-primary/5 blur-3xl" />
+          <div className="h-150 w-225 rounded-full bg-primary/5 blur-3xl" />
         </div>
 
         <div className="mx-auto flex max-w-3xl flex-col items-center gap-8 text-center">
@@ -42,8 +42,7 @@ export default function Home() {
               </span>
             </h1>
             <p className="mx-auto max-w-xl text-lg text-muted-foreground">
-              Browse restaurants, check availability, and book your table in
-              seconds. No phone calls needed.
+              Browse restaurants, check availability, and book your table in seconds. No phone calls needed.
             </p>
           </div>
 
@@ -67,12 +66,8 @@ export default function Home() {
       <section className="border-t bg-muted/40 px-4 py-20">
         <div className="mx-auto max-w-5xl">
           <div className="mb-12 text-center">
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Book a table in 3 simple steps
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              From search to confirmation in under a minute.
-            </p>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Book a table in 3 simple steps</h2>
+            <p className="mt-2 text-muted-foreground">From search to confirmation in under a minute.</p>
           </div>
 
           <div className="grid gap-8 sm:grid-cols-3">
@@ -81,22 +76,19 @@ export default function Home() {
                 icon: <Search className="h-6 w-6" />,
                 step: "1",
                 title: "Search",
-                description:
-                  "Filter restaurants by city, cuisine, or name to find the perfect match.",
+                description: "Filter restaurants by city, cuisine, or name to find the perfect match.",
               },
               {
                 icon: <CalendarCheck className="h-6 w-6" />,
                 step: "2",
                 title: "Pick a slot",
-                description:
-                  "Choose your date, time, and party size. See real-time availability.",
+                description: "Choose your date, time, and party size. See real-time availability.",
               },
               {
                 icon: <Clock className="h-6 w-6" />,
                 step: "3",
                 title: "Confirm",
-                description:
-                  "Instantly secure your reservation — no waiting, no phone tag.",
+                description: "Instantly secure your reservation — no waiting, no phone tag.",
               },
             ].map(({ icon, step, title, description }) => (
               <div
@@ -121,12 +113,8 @@ export default function Home() {
       <section className="px-4 py-20">
         <div className="mx-auto max-w-5xl">
           <div className="mb-12 text-center">
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Everything you need
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              Built for both diners and restaurant owners.
-            </p>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Everything you need</h2>
+            <p className="mt-2 text-muted-foreground">Built for both diners and restaurant owners.</p>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -134,32 +122,27 @@ export default function Home() {
               {
                 icon: <Search className="h-5 w-5" />,
                 title: "Smart search",
-                description:
-                  "Filter by city, cuisine type, and more to discover exactly what you're after.",
+                description: "Filter by city, cuisine type, and more to discover exactly what you're after.",
               },
               {
                 icon: <CalendarCheck className="h-5 w-5" />,
                 title: "Real-time availability",
-                description:
-                  "See open tables and time slots instantly — always up to date.",
+                description: "See open tables and time slots instantly — always up to date.",
               },
               {
                 icon: <ShieldCheck className="h-5 w-5" />,
                 title: "Secure bookings",
-                description:
-                  "Your reservations are confirmed and protected with secure authentication.",
+                description: "Your reservations are confirmed and protected with secure authentication.",
               },
               {
                 icon: <Smartphone className="h-5 w-5" />,
                 title: "Mobile friendly",
-                description:
-                  "A seamless experience on any device — phone, tablet, or desktop.",
+                description: "A seamless experience on any device — phone, tablet, or desktop.",
               },
               {
                 icon: <Clock className="h-5 w-5" />,
                 title: "Opening hours aware",
-                description:
-                  "Time slots respect each restaurant's schedule so you never book outside hours.",
+                description: "Time slots respect each restaurant's schedule so you never book outside hours.",
               },
               {
                 icon: <UtensilsCrossed className="h-5 w-5" />,
@@ -186,9 +169,7 @@ export default function Home() {
       {/* CTA banner */}
       <section className="border-t bg-muted/40 px-4 py-16">
         <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 text-center">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            Ready to find your table?
-          </h2>
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Ready to find your table?</h2>
           <p className="text-muted-foreground">
             Join thousands of diners who skip the phone call and book online.
           </p>
