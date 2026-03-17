@@ -16,11 +16,12 @@ export const auth = betterAuth({
   },
   plugins: [
     customSession(async ({ user, session }) => {
-      const role = await userService.getRole(user.id);
+      const { role, onboarded } = await userService.getProfile(user.id);
       return {
         user: {
           ...user,
           role,
+          onboarded,
         },
         session,
       };

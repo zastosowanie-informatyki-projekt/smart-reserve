@@ -2,14 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { setUserRole } from "@/server/auth/actions/set-user-role";
 import { CalendarDays, Store, Briefcase } from "lucide-react";
 
@@ -34,9 +27,7 @@ export const OnboardingForm = ({ userName }: { userName: string }) => {
     <Card className="w-full">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Welcome, {userName}!</CardTitle>
-        <CardDescription>
-          How do you plan to use TableSpot?
-        </CardDescription>
+        <CardDescription>How do you plan to use TableSpot?</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <button
@@ -50,9 +41,7 @@ export const OnboardingForm = ({ userName }: { userName: string }) => {
           </div>
           <div>
             <p className="font-medium">I want to make reservations</p>
-            <p className="text-sm text-muted-foreground">
-              Browse restaurants and book tables
-            </p>
+            <p className="text-sm text-muted-foreground">Browse restaurants and book tables</p>
           </div>
         </button>
 
@@ -66,10 +55,8 @@ export const OnboardingForm = ({ userName }: { userName: string }) => {
             <Store className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <p className="font-medium">I want to manage a restaurant</p>
-            <p className="text-sm text-muted-foreground">
-              Create and manage your restaurant listings
-            </p>
+            <p className="font-medium">I&apos;m the restaurant&apos;s owner/ manager</p>
+            <p className="text-sm text-muted-foreground">Create and manage your restaurant listings</p>
           </div>
         </button>
 
@@ -84,15 +71,11 @@ export const OnboardingForm = ({ userName }: { userName: string }) => {
           </div>
           <div>
             <p className="font-medium">I am a restaurant employee</p>
-            <p className="text-sm text-muted-foreground">
-              Get assigned to a restaurant by its owner
-            </p>
+            <p className="text-sm text-muted-foreground">Get assigned to a restaurant by its owner</p>
           </div>
         </button>
 
-        {error && (
-          <p className="text-center text-sm text-destructive">{error}</p>
-        )}
+        {error && <p className="text-center text-sm text-destructive">{error}</p>}
       </CardContent>
     </Card>
   );

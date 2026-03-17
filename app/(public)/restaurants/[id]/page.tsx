@@ -39,7 +39,7 @@ export default async function RestaurantDetailPage({
           phone={restaurant.phone}
           email={restaurant.email}
           website={restaurant.website}
-          cuisine={restaurant.cuisine}
+          cuisines={restaurant.cuisines}
         />
 
         {restaurant.photos.length > 0 && (

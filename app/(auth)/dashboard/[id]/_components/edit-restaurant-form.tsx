@@ -24,28 +24,42 @@ import {
 } from "@/components/ui/dialog";
 import { updateRestaurant } from "@/server/restaurants/actions/update-restaurant";
 import { deleteRestaurant } from "@/server/restaurants/actions/delete-restaurant";
+import { CUISINE_OPTIONS } from "@/lib/cuisines";
+import type { CuisineType } from "@/app/generated/prisma/client";
 import { Trash2 } from "lucide-react";
+
+interface EditRestaurantFormProps {
+  id: string;
+  name: string;
+  description: string | null;
+  street: string;
+  buildingNumber: string;
+  city: string;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  cuisines: CuisineType[];
+}
 
 export const EditRestaurantForm = ({
   restaurant,
 }: {
-  restaurant: {
-    id: string;
-    name: string;
-    description: string | null;
-    address: string;
-    city: string;
-    phone: string | null;
-    email: string | null;
-    website: string | null;
-    cuisine: string | null;
-  };
+  restaurant: EditRestaurantFormProps;
 }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isDeleting, startDeleteTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [selectedCuisines, setSelectedCuisines] = useState<CuisineType[]>(
+    restaurant.cuisines,
+  );
+
+  const toggleCuisine = (value: CuisineType) => {
+    setSelectedCuisines((prev) =>
+      prev.includes(value) ? prev.filter((c) => c !== value) : [...prev, value],
+    );
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -53,6 +67,7 @@ export const EditRestaurantForm = ({
 
     const formData = new FormData(e.currentTarget);
     formData.set("id", restaurant.id);
+    selectedCuisines.forEach((c) => formData.append("cuisines", c));
 
     startTransition(async () => {
       const result = await updateRestaurant(formData);
@@ -119,24 +134,38 @@ export const EditRestaurantForm = ({
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="edit-name">Name</Label>
-              <Input
-                id="edit-name"
-                name="name"
-                defaultValue={restaurant.name}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="edit-cuisine">Cuisine</Label>
-              <Input
-                id="edit-cuisine"
-                name="cuisine"
-                defaultValue={restaurant.cuisine ?? ""}
-              />
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-name">Name</Label>
+            <Input
+              id="edit-name"
+              name="name"
+              defaultValue={restaurant.name}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label>Cuisines</Label>
+            <div className="flex flex-wrap gap-2">
+              {CUISINE_OPTIONS.map((option) => {
+                const active = selectedCuisines.includes(option.value);
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => toggleCuisine(option.value)}
+                    className={`rounded-md border px-3 py-1 text-sm transition-colors ${
+                      active
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
+
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="edit-description">Description</Label>
             <Textarea
@@ -148,13 +177,23 @@ export const EditRestaurantForm = ({
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="edit-address">Address</Label>
+              <Label htmlFor="edit-street">Street</Label>
               <Input
-                id="edit-address"
-                name="address"
-                defaultValue={restaurant.address}
+                id="edit-street"
+                name="street"
+                defaultValue={restaurant.street}
               />
             </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="edit-buildingNumber">Building Number</Label>
+              <Input
+                id="edit-buildingNumber"
+                name="buildingNumber"
+                defaultValue={restaurant.buildingNumber}
+              />
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="edit-city">City</Label>
               <Input

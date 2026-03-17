@@ -1,5 +1,6 @@
 "use server";
 
+import { CuisineType } from "@/app/generated/prisma/client";
 import type { ActionResult } from "@/lib/types";
 import { restaurantService } from "../services/restaurant.service";
 
@@ -12,15 +13,19 @@ export async function getRestaurants(filters?: {
       id: string;
       name: string;
       description: string | null;
-      address: string;
+      street: string;
+      buildingNumber: string;
       city: string;
-      cuisine: string | null;
+      cuisines: CuisineType[];
       imageUrl: string | null;
     }>
   >
 > {
   try {
-    const restaurants = await restaurantService.findMany(filters);
+    const restaurants = await restaurantService.findMany({
+      city: filters?.city,
+      cuisine: filters?.cuisine as CuisineType | undefined,
+    });
     return { success: true, data: restaurants };
   } catch (error) {
     console.error("Failed to get restaurants:", error);

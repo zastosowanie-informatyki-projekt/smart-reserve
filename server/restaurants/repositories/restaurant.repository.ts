@@ -1,3 +1,4 @@
+import { CuisineType } from "@/app/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { CreateRestaurantInput, UpdateRestaurantInput } from "../types";
 
@@ -9,13 +10,14 @@ export const restaurantRepository = {
         id: true,
         name: true,
         description: true,
-        address: true,
+        street: true,
+        buildingNumber: true,
         city: true,
         phone: true,
         email: true,
         imageUrl: true,
         website: true,
-        cuisine: true,
+        cuisines: true,
         ownerId: true,
         createdAt: true,
       },
@@ -31,13 +33,14 @@ export const restaurantRepository = {
         id: true,
         name: true,
         description: true,
-        address: true,
+        street: true,
+        buildingNumber: true,
         city: true,
         phone: true,
         email: true,
         imageUrl: true,
         website: true,
-        cuisine: true,
+        cuisines: true,
         ownerId: true,
         createdAt: true,
         updatedAt: true,
@@ -56,13 +59,14 @@ export const restaurantRepository = {
         id: true,
         name: true,
         description: true,
-        address: true,
+        street: true,
+        buildingNumber: true,
         city: true,
         phone: true,
         email: true,
         imageUrl: true,
         website: true,
-        cuisine: true,
+        cuisines: true,
         ownerId: true,
         createdAt: true,
         openingHours: {
@@ -87,19 +91,20 @@ export const restaurantRepository = {
     });
   },
 
-  async findMany(filters?: { city?: string; cuisine?: string }) {
+  async findMany(filters?: { city?: string; cuisine?: CuisineType }) {
     return prisma.restaurant.findMany({
       where: {
         ...(filters?.city && { city: { contains: filters.city, mode: "insensitive" as const } }),
-        ...(filters?.cuisine && { cuisine: { contains: filters.cuisine, mode: "insensitive" as const } }),
+        ...(filters?.cuisine && { cuisines: { has: filters.cuisine } }),
       },
       select: {
         id: true,
         name: true,
         description: true,
-        address: true,
+        street: true,
+        buildingNumber: true,
         city: true,
-        cuisine: true,
+        cuisines: true,
         imageUrl: true,
       },
       orderBy: { createdAt: "desc" },
@@ -113,7 +118,7 @@ export const restaurantRepository = {
         id: true,
         name: true,
         city: true,
-        cuisine: true,
+        cuisines: true,
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
@@ -167,5 +172,4 @@ export const restaurantRepository = {
       ),
     );
   },
-
 };

@@ -8,6 +8,7 @@ import { getRestaurantReservations } from "@/server/reservations/actions/get-res
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EditRestaurantForm } from "./_components/edit-restaurant-form";
+import { CUISINE_LABEL } from "@/lib/cuisines";
 import { OpeningHoursForm } from "./_components/opening-hours-form";
 import { ReservationManagement } from "./_components/reservation-management";
 import { PhotoManagement } from "./_components/photo-management";
@@ -82,7 +83,9 @@ export default async function ManageRestaurantPage({ params }: { params: Promise
             </CardHeader>
             <CardContent className="flex flex-col gap-1.5 text-sm">
               <p><span className="font-medium">Name:</span> {restaurant.name}</p>
-              {restaurant.cuisine && <p><span className="font-medium">Cuisine:</span> {restaurant.cuisine}</p>}
+              {restaurant.cuisines.length > 0 && (
+                <p><span className="font-medium">Cuisines:</span> {restaurant.cuisines.map((c) => CUISINE_LABEL[c]).join(", ")}</p>
+              )}
               <p><span className="font-medium">Address:</span> {restaurant.address}, {restaurant.city}</p>
               {restaurant.phone && <p><span className="font-medium">Phone:</span> {restaurant.phone}</p>}
               {restaurant.email && <p><span className="font-medium">Email:</span> {restaurant.email}</p>}

@@ -10,14 +10,15 @@ export async function createRestaurant(
 ): Promise<ActionResult<{ id: string }>> {
   const parsed = createRestaurantSchema.safeParse({
     name: formData.get("name"),
-    address: formData.get("address"),
+    street: formData.get("street"),
+    buildingNumber: formData.get("buildingNumber"),
     city: formData.get("city"),
     description: formData.get("description") || undefined,
     phone: formData.get("phone") || undefined,
     email: formData.get("email") || undefined,
     imageUrl: formData.get("imageUrl") || undefined,
     website: formData.get("website") || undefined,
-    cuisine: formData.get("cuisine") || undefined,
+    cuisines: formData.getAll("cuisines") as string[],
   });
 
   if (!parsed.success) {

@@ -1,15 +1,17 @@
 import { z } from "zod";
+import { CuisineType } from "@/app/generated/prisma/client";
 
 export const createRestaurantSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  address: z.string().min(1, "Address is required"),
+  street: z.string().min(1, "Street is required"),
+  buildingNumber: z.string().min(1, "Building number is required"),
   city: z.string().min(1, "City is required"),
   description: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email("Invalid email").optional().or(z.literal("")),
   imageUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
   website: z.string().url("Invalid URL").optional().or(z.literal("")),
-  cuisine: z.string().optional(),
+  cuisines: z.array(z.nativeEnum(CuisineType)).optional().default([]),
 });
 
 export const updateRestaurantSchema = createRestaurantSchema.partial().extend({

@@ -1,5 +1,6 @@
 "use server";
 
+import { CuisineType } from "@/app/generated/prisma/client";
 import type { ActionResult } from "@/lib/types";
 import { authService } from "@/server/auth/services/auth.service";
 import { restaurantRepository } from "../repositories/restaurant.repository";
@@ -10,7 +11,7 @@ export async function getMyRestaurants(): Promise<
       id: string;
       name: string;
       city: string;
-      cuisine: string | null;
+      cuisines: CuisineType[];
       createdAt: Date;
     }>
   >

@@ -61,7 +61,7 @@ export const invitationRepository = {
             id: true,
             name: true,
             city: true,
-            cuisine: true,
+            cuisines: true,
             imageUrl: true,
           },
         },

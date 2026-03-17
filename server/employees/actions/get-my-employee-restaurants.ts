@@ -1,5 +1,6 @@
 "use server";
 
+import { CuisineType } from "@/app/generated/prisma/client";
 import type { ActionResult } from "@/lib/types";
 import { employeeService } from "../services/employee.service";
 
@@ -12,7 +13,7 @@ export async function getMyEmployeeRestaurants(): Promise<
         id: string;
         name: string;
         city: string;
-        cuisine: string | null;
+        cuisines: CuisineType[];
         imageUrl: string | null;
       };
     }>

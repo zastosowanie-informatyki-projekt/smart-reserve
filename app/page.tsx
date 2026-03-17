@@ -10,7 +10,6 @@ import {
   Clock,
   Star,
   ShieldCheck,
-  Smartphone,
 } from "lucide-react";
 
 export default async function Home() {
@@ -140,11 +139,6 @@ export default async function Home() {
                 icon: <ShieldCheck className="h-5 w-5" />,
                 title: "Secure bookings",
                 description: "Your reservations are confirmed and protected with secure authentication.",
-              },
-              {
-                icon: <Smartphone className="h-5 w-5" />,
-                title: "Mobile friendly",
-                description: "A seamless experience on any device — phone, tablet, or desktop.",
               },
               {
                 icon: <Clock className="h-5 w-5" />,

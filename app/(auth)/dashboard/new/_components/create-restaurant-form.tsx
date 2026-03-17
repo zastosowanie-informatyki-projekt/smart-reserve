@@ -7,17 +7,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createRestaurant } from "@/server/restaurants/actions/create-restaurant";
+import { CUISINE_OPTIONS } from "@/lib/cuisines";
+import type { CuisineType } from "@/app/generated/prisma/client";
 
 export const CreateRestaurantForm = () => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [selectedCuisines, setSelectedCuisines] = useState<CuisineType[]>([]);
+
+  const toggleCuisine = (value: CuisineType) => {
+    setSelectedCuisines((prev) =>
+      prev.includes(value) ? prev.filter((c) => c !== value) : [...prev, value],
+    );
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
     const formData = new FormData(e.currentTarget);
+    selectedCuisines.forEach((c) => formData.append("cuisines", c));
 
     startTransition(async () => {
       const result = await createRestaurant(formData);
@@ -36,9 +46,28 @@ export const CreateRestaurantForm = () => {
           <Label htmlFor="name">Restaurant Name *</Label>
           <Input id="name" name="name" required placeholder="My Restaurant" />
         </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="cuisine">Cuisine</Label>
-          <Input id="cuisine" name="cuisine" placeholder="e.g. Italian" />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label>Cuisines</Label>
+        <div className="flex flex-wrap gap-2">
+          {CUISINE_OPTIONS.map((option) => {
+            const active = selectedCuisines.includes(option.value);
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => toggleCuisine(option.value)}
+                className={`rounded-md border px-3 py-1 text-sm transition-colors ${
+                  active
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -54,9 +83,16 @@ export const CreateRestaurantForm = () => {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="address">Address *</Label>
-          <Input id="address" name="address" required placeholder="123 Main St" />
+          <Label htmlFor="street">Street *</Label>
+          <Input id="street" name="street" required placeholder="ul. Marszałkowska" />
         </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="buildingNumber">Building Number *</Label>
+          <Input id="buildingNumber" name="buildingNumber" required placeholder="10A" />
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="city">City *</Label>
           <Input id="city" name="city" required placeholder="Warsaw" />

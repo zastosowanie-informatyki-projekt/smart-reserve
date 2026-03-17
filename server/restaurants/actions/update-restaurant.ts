@@ -11,14 +11,15 @@ export async function updateRestaurant(
   const parsed = updateRestaurantSchema.safeParse({
     id: formData.get("id"),
     name: formData.get("name") || undefined,
-    address: formData.get("address") || undefined,
+    street: formData.get("street") || undefined,
+    buildingNumber: formData.get("buildingNumber") || undefined,
     city: formData.get("city") || undefined,
     description: formData.get("description") || undefined,
     phone: formData.get("phone") || undefined,
     email: formData.get("email") || undefined,
     imageUrl: formData.get("imageUrl") || undefined,
     website: formData.get("website") || undefined,
-    cuisine: formData.get("cuisine") || undefined,
+    cuisines: formData.getAll("cuisines") as string[],
   });
 
   if (!parsed.success) {

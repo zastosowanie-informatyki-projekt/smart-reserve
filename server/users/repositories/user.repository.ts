@@ -1,17 +1,18 @@
 import { prisma } from "@/lib/prisma";
 
 export const userRepository = {
-  async findRoleById(id: string) {
+  async findById(id: string) {
     return prisma.user.findUnique({
       where: { id },
-      select: { role: true },
+      select: { role: true, onboarded: true },
     });
   },
 
+  async findRoleById(id: string) {
+    return this.findById(id);
+  },
+
   async findOnboardedById(id: string) {
-    return prisma.user.findUnique({
-      where: { id },
-      select: { onboarded: true },
-    });
+    return this.findById(id);
   },
 };

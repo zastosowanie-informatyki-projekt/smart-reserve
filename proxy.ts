@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { auth } from "@/lib/auth";
 
 const SKIP_PATHS = ["/onboarding", "/api/", "/_next", "/favicon.ico"];
 
@@ -19,19 +20,15 @@ export async function proxy(request: NextRequest) {
   }
 
   try {
-    const res = await fetch(
-      new URL("/api/check-onboarded", request.url),
-      { headers: { cookie: request.headers.get("cookie") ?? "" } },
-    );
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
 
-    if (res.ok) {
-      const data = await res.json();
-      if (!data.onboarded) {
-        return NextResponse.redirect(new URL("/onboarding", request.url));
-      }
+    if (session && !session.user.onboarded) {
+      return NextResponse.redirect(new URL("/onboarding", request.url));
     }
   } catch {
-    // If check fails, allow the request through
+    // If session check fails, allow the request through
   }
 
   return NextResponse.next();

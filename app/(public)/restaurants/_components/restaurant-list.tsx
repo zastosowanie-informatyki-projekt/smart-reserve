@@ -1,3 +1,4 @@
+import { CuisineType } from "@/app/generated/prisma/client";
 import { RestaurantCard } from "./restaurant-card";
 
 export const RestaurantList = ({
@@ -8,7 +9,7 @@ export const RestaurantList = ({
     name: string;
     description: string | null;
     city: string;
-    cuisine: string | null;
+    cuisines: CuisineType[];
   }>;
 }) => {
   if (restaurants.length === 0) {

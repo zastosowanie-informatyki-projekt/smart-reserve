@@ -1,3 +1,4 @@
+import { CuisineType } from "@/app/generated/prisma/client";
 import { authService } from "@/server/auth/services/auth.service";
 import { restaurantRepository } from "../repositories/restaurant.repository";
 import type {
@@ -32,7 +33,7 @@ export const restaurantService = {
     return restaurant;
   },
 
-  async findMany(filters?: { city?: string; cuisine?: string }) {
+  async findMany(filters?: { city?: string; cuisine?: CuisineType }) {
     return restaurantRepository.findMany(filters);
   },
 

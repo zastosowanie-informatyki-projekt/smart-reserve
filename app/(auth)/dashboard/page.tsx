@@ -67,7 +67,7 @@ export default async function DashboardPage() {
                     id={restaurant.id}
                     name={restaurant.name}
                     city={restaurant.city}
-                    cuisine={restaurant.cuisine}
+                    cuisines={restaurant.cuisines}
                   />
                 ))}
               </div>
@@ -87,7 +87,7 @@ export default async function DashboardPage() {
                     id={restaurant.id}
                     name={restaurant.name}
                     city={restaurant.city}
-                    cuisine={restaurant.cuisine}
+                    cuisines={restaurant.cuisines}
                   />
                 ))}
               </div>

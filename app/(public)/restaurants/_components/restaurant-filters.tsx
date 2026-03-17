@@ -4,8 +4,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Search } from "lucide-react";
 import { useState } from "react";
+import { CUISINE_OPTIONS } from "@/lib/cuisines";
 
 export const RestaurantFilters = () => {
   const router = useRouter();
@@ -34,12 +42,20 @@ export const RestaurantFilters = () => {
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="cuisine">Cuisine</Label>
-        <Input
-          id="cuisine"
-          placeholder="e.g. Italian"
-          value={cuisine}
-          onChange={(e) => setCuisine(e.target.value)}
-        />
+          <Select value={cuisine} onValueChange={(v) => setCuisine(v ?? "")}>
+
+          <SelectTrigger id="cuisine" className="w-48">
+            <SelectValue placeholder="All cuisines" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All cuisines</SelectItem>
+            {CUISINE_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <Button type="submit">
         <Search className="mr-2 h-4 w-4" />

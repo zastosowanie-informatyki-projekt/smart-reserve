@@ -7,18 +7,22 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
+import { CUISINE_LABEL } from "@/lib/cuisines";
+import type { CuisineType } from "@/app/generated/prisma/client";
 
 export const RestaurantOwnerCard = ({
   id,
   name,
   city,
-  cuisine,
+  cuisines,
 }: {
   id: string;
   name: string;
   city: string;
-  cuisine: string | null;
+  cuisines: CuisineType[];
 }) => {
+  const cuisineText = cuisines.map((c) => CUISINE_LABEL[c]).join(", ");
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -26,7 +30,7 @@ export const RestaurantOwnerCard = ({
           <CardTitle className="text-lg">{name}</CardTitle>
           <CardDescription>
             {city}
-            {cuisine ? ` · ${cuisine}` : ""}
+            {cuisineText ? ` · ${cuisineText}` : ""}
           </CardDescription>
         </div>
         <Link href={`/dashboard/${id}`}>

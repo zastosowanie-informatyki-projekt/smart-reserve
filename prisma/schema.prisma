@@ -21,6 +21,26 @@ enum ReservationStatus {
   NO_SHOW
 }
 
+enum CuisineType {
+  ITALIAN
+  FRENCH
+  JAPANESE
+  CHINESE
+  INDIAN
+  MEXICAN
+  AMERICAN
+  MEDITERRANEAN
+  THAI
+  GREEK
+  SPANISH
+  MIDDLE_EASTERN
+  KOREAN
+  VIETNAMESE
+  POLISH
+  GERMAN
+  OTHER
+}
+
 model User {
   id            String               @id
   name          String
@@ -95,13 +115,14 @@ model Restaurant {
   id           String               @id @default(cuid())
   name         String
   description  String?
-  address      String
-  city         String
+  street         String
+  buildingNumber String
+  city           String
   phone        String?
   email        String?
   imageUrl     String?
   website      String?
-  cuisine      String?
+  cuisines     CuisineType[]
   ownerId      String
   owner        User                 @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   rooms        Room[]
