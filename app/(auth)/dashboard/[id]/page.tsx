@@ -86,7 +86,7 @@ export default async function ManageRestaurantPage({ params }: { params: Promise
               {restaurant.cuisines.length > 0 && (
                 <p><span className="font-medium">Cuisines:</span> {restaurant.cuisines.map((c) => CUISINE_LABEL[c]).join(", ")}</p>
               )}
-              <p><span className="font-medium">Address:</span> {restaurant.address}, {restaurant.city}</p>
+              <p><span className="font-medium">Address:</span> {restaurant.street} {restaurant.buildingNumber}, {restaurant.city}</p>
               {restaurant.phone && <p><span className="font-medium">Phone:</span> {restaurant.phone}</p>}
               {restaurant.email && <p><span className="font-medium">Email:</span> {restaurant.email}</p>}
             </CardContent>

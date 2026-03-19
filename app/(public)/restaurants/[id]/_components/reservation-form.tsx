@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +61,11 @@ export const ReservationForm = ({
   const [isSearching, startSearchTransition] = useTransition();
   const [isBooking, startBookTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [today, setToday] = useState("");
+
+  useEffect(() => {
+    setToday(new Date().toISOString().split("T")[0]);
+  }, []);
 
   const [date, setDate] = useState("");
   const [startTimeSlot, setStartTimeSlot] = useState("");
@@ -172,8 +177,6 @@ export const ReservationForm = ({
     );
   }
 
-  const today = new Date().toISOString().split("T")[0];
-
   // Build a set of available table IDs for the floor plan viewer
   const availableTableIds = new Set(availableTables?.map((t) => t.id) ?? []);
 
@@ -192,12 +195,12 @@ export const ReservationForm = ({
         <form onSubmit={handleSearch} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="date">Date</Label>
-            <Input
-              id="date"
-              type="date"
-              required
-              min={today}
-              value={date}
+              <Input
+                id="date"
+                type="date"
+                required
+                min={today || undefined}
+                value={date}
               onChange={(e) => {
                 setDate(e.target.value);
                 setStartTimeSlot("");

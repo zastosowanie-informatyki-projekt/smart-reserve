@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,16 +9,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, LayoutDashboard, CalendarDays, Settings } from "lucide-react";
+import Link from "next/link";
+import { User, LogOut, Settings } from "lucide-react";
 
 export const NavbarAuth = ({
   session,
-  hasRestaurants,
+  hasRestaurants: _hasRestaurants,
 }: {
   session: {
     user: { name: string; email: string; image?: string | null };
   } | null;
-  hasRestaurants: boolean;
+  hasRestaurants?: boolean;
 }) => {
   const handleSignIn = async () => {
     await authClient.signIn.social({ provider: "google" });
@@ -39,21 +39,7 @@ export const NavbarAuth = ({
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <Link href="/reservations">
-        <Button variant="ghost" size="sm" className="hidden md:flex">
-          <CalendarDays className="mr-1.5 h-4 w-4" />
-          My Reservations
-        </Button>
-      </Link>
-      {hasRestaurants && (
-        <Link href="/dashboard">
-          <Button variant="ghost" size="sm" className="hidden md:flex">
-            <LayoutDashboard className="mr-1.5 h-4 w-4" />
-            My Restaurants
-          </Button>
-        </Link>
-      )}
+    <div className="flex items-center gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
@@ -82,16 +68,6 @@ export const NavbarAuth = ({
             <Settings className="mr-2 h-4 w-4" />
             Profile
           </DropdownMenuItem>
-          <DropdownMenuItem className="md:hidden" render={<Link href="/reservations" />}>
-            <CalendarDays className="mr-2 h-4 w-4" />
-            My Reservations
-          </DropdownMenuItem>
-          {hasRestaurants && (
-            <DropdownMenuItem className="md:hidden" render={<Link href="/dashboard" />}>
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              My Restaurants
-            </DropdownMenuItem>
-          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>
             <LogOut className="mr-2 h-4 w-4" />

@@ -34,7 +34,8 @@ export default async function RestaurantDetailPage({
         <RestaurantInfo
           name={restaurant.name}
           description={restaurant.description}
-          address={restaurant.address}
+          street={restaurant.street}
+          buildingNumber={restaurant.buildingNumber}
           city={restaurant.city}
           phone={restaurant.phone}
           email={restaurant.email}
