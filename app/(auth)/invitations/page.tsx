@@ -21,7 +21,7 @@ export default async function InvitationsPage() {
   const invitations = result.success ? result.data : [];
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Invitations</h1>
         <p className="text-muted-foreground">

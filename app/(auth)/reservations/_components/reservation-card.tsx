@@ -63,23 +63,27 @@ export const ReservationCard = ({
 
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <CardTitle className="text-base">{restaurant.name}</CardTitle>
+            <CardTitle className="text-sm">{restaurant.name}</CardTitle>
             <CardDescription>{table.label}</CardDescription>
+            <CardDescription className="mt-0.5 flex items-center gap-1.5 text-xs">
+              <Users className="h-3 w-3" />
+              {guestCount} guests
+            </CardDescription>
           </div>
           <Badge variant={STATUS_VARIANT[status] ?? "outline"}>{status}</Badge>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+      <CardContent className="flex flex-col gap-1.5 pt-0">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5">
-            <CalendarDays className="h-3.5 w-3.5" />
+            <CalendarDays className="h-3 w-3" />
             <span>{formatDateTime(startTime)}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5" />
+            <Clock className="h-3 w-3" />
             <span>
               until{" "}
               {new Date(endTime).toLocaleTimeString("en-US", {
@@ -89,26 +93,26 @@ export const ReservationCard = ({
               })}
             </span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5" />
-            <span>{guestCount} guests</span>
-          </div>
         </div>
-        {notes && (
-          <p className="text-sm text-muted-foreground">
-            Notes: {notes}
-          </p>
-        )}
-        {canCancel && (
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleCancel}
-            disabled={isPending}
-            className="w-fit"
-          >
-            {isPending ? "Cancelling..." : "Cancel Reservation"}
-          </Button>
+        {(notes || canCancel) && (
+          <div className="flex flex-wrap items-center gap-2">
+            {notes && (
+              <p className="text-xs text-muted-foreground">
+                Notes: {notes}
+              </p>
+            )}
+            {canCancel && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleCancel}
+                disabled={isPending}
+                className="ml-auto h-7 px-2.5 text-xs"
+              >
+                {isPending ? "Cancelling..." : "Cancel Reservation"}
+              </Button>
+            )}
+          </div>
         )}
       </CardContent>
     </Card>

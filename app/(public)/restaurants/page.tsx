@@ -21,7 +21,7 @@ export default async function RestaurantsPage({
   const restaurants = result.success ? result.data : [];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-8 flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Restaurants</h1>
         <p className="text-muted-foreground">

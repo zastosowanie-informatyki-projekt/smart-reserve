@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createRestaurant } from "@/server/restaurants/actions/create-restaurant";
-import { CUISINE_OPTIONS } from "@/lib/cuisines";
+import { CuisineMultiSelect } from "@/components/ui/cuisine-multi-select";
 import type { CuisineType } from "@/app/generated/prisma/client";
 
 export const CreateRestaurantForm = () => {
@@ -50,25 +50,10 @@ export const CreateRestaurantForm = () => {
 
       <div className="flex flex-col gap-1.5">
         <Label>Cuisines</Label>
-        <div className="flex flex-wrap gap-2">
-          {CUISINE_OPTIONS.map((option) => {
-            const active = selectedCuisines.includes(option.value);
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => toggleCuisine(option.value)}
-                className={`rounded-md border px-3 py-1 text-sm transition-colors ${
-                  active
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                }`}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
+        <CuisineMultiSelect
+          selectedCuisines={selectedCuisines}
+          onToggleCuisine={toggleCuisine}
+        />
       </div>
 
       <div className="flex flex-col gap-1.5">

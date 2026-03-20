@@ -56,7 +56,7 @@ export const DesktopSidebar = ({
     <aside
       className={cn(
         "hidden shrink-0 self-start border-r bg-sidebar/70 py-5 transition-[width,padding] duration-200 md:sticky md:top-0 md:flex md:h-screen",
-        collapsed ? "w-20 px-2" : "w-72 px-4",
+        collapsed ? "w-22 px-1.5" : "w-56 px-3",
       )}
     >
       <div className="flex h-full w-full flex-col justify-between">

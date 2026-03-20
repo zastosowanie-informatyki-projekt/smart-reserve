@@ -311,7 +311,7 @@ export const FloorPlanEditor = ({
   const activeRoom = rooms.find((r) => r.id === activeRoomId);
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col">
+    <div className="flex h-screen flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-4 border-b px-4 py-3">
         <Link

@@ -1,3 +1,5 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
 const DAY_NAMES = [
   "Monday",
   "Tuesday",
@@ -20,34 +22,42 @@ export const OpeningHoursDisplay = ({
 }) => {
   if (hours.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Opening hours not set yet.
-      </p>
+      <Card>
+        <CardHeader>
+          <CardTitle>Opening Hours</CardTitle>
+          <CardDescription>Opening hours not set yet.</CardDescription>
+        </CardHeader>
+      </Card>
     );
   }
 
   const sortedHours = [...hours].sort((a, b) => a.dayOfWeek - b.dayOfWeek);
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <h3 className="text-sm font-medium">Opening Hours</h3>
-      <div className="grid gap-1">
-        {sortedHours.map((entry) => (
-          <div
-            key={entry.dayOfWeek}
-            className="flex justify-between text-sm"
-          >
-            <span className="text-muted-foreground">
-              {DAY_NAMES[entry.dayOfWeek]}
-            </span>
-            <span>
-              {entry.isClosed
-                ? "Closed"
-                : `${entry.openTime} - ${entry.closeTime}`}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Opening Hours</CardTitle>
+        <CardDescription>Plan your visit around the weekly schedule.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-1.5">
+          {sortedHours.map((entry) => (
+            <div
+              key={entry.dayOfWeek}
+              className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+            >
+              <span className="text-muted-foreground">
+                {DAY_NAMES[entry.dayOfWeek]}
+              </span>
+              <span>
+                {entry.isClosed
+                  ? "Closed"
+                  : `${entry.openTime} - ${entry.closeTime}`}
+              </span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
