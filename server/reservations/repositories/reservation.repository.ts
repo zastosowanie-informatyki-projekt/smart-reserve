@@ -147,6 +147,16 @@ export const reservationRepository = {
     });
   },
 
+  async countUpcomingByTableId(tableId: string) {
+    return prisma.reservation.count({
+      where: {
+        tableId,
+        status: { notIn: ["CANCELLED", "NO_SHOW", "COMPLETED"] },
+        endTime: { gt: new Date() },
+      },
+    });
+  },
+
   async countActiveOrUpcomingByUserId(userId: string) {
     return prisma.reservation.count({
       where: {

@@ -1,5 +1,6 @@
 import { authService } from "@/server/auth/services/auth.service";
 import { roomRepository } from "@/server/rooms/repositories/room.repository";
+import { reservationRepository } from "@/server/reservations/repositories/reservation.repository";
 import { tableRepository } from "../repositories/table.repository";
 import type { CreateTableInput, UpdateTableInput } from "../types";
 
@@ -48,7 +49,12 @@ export const tableService = {
       table.room.restaurantId,
     );
 
-    return tableRepository.softDelete(id);
+    const upcomingCount = await reservationRepository.countUpcomingByTableId(id);
+    if (upcomingCount > 0) {
+      throw new Error(`UPCOMING_RESERVATIONS:${upcomingCount}`);
+    }
+
+    return tableRepository.softDeleteAndCleanupFloorPlan(id);
   },
 
   async findByRestaurantId(restaurantId: string) {

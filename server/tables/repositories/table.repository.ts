@@ -1,3 +1,4 @@
+import type { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { CreateTableInput, UpdateTableInput } from "../types";
 
@@ -40,6 +41,61 @@ export const tableRepository = {
     return prisma.restaurantTable.update({
       where: { id },
       data: { isActive: false },
+    });
+  },
+
+  async softDeleteAndCleanupFloorPlan(id: string) {
+    return prisma.$transaction(async (tx) => {
+      const table = await tx.restaurantTable.findUnique({
+        where: { id },
+        select: { roomId: true },
+      });
+
+      if (table) {
+        const room = await tx.room.findUnique({
+          where: { id: table.roomId },
+          select: { floorPlan: true },
+        });
+
+        const floorPlan = room?.floorPlan;
+        if (
+          floorPlan &&
+          typeof floorPlan === "object" &&
+          !Array.isArray(floorPlan)
+        ) {
+          const floorPlanObject = floorPlan as Prisma.JsonObject;
+          const elements = floorPlanObject["elements"];
+
+          if (Array.isArray(elements)) {
+            const nextElements = elements.filter((element) => {
+              if (!element || typeof element !== "object" || Array.isArray(element)) {
+                return true;
+              }
+
+              const floorPlanElement = element as Prisma.JsonObject;
+              return !(
+                floorPlanElement["type"] === "table" &&
+                floorPlanElement["tableId"] === id
+              );
+            });
+
+            await tx.room.update({
+              where: { id: table.roomId },
+              data: {
+                floorPlan: {
+                  ...floorPlanObject,
+                  elements: nextElements as Prisma.JsonArray,
+                } satisfies Prisma.InputJsonValue,
+              },
+            });
+          }
+        }
+      }
+
+      return tx.restaurantTable.update({
+        where: { id },
+        data: { isActive: false },
+      });
     });
   },
 
