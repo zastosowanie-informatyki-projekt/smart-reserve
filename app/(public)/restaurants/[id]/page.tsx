@@ -1,8 +1,11 @@
 import { notFound } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { getRestaurant } from "@/server/restaurants/actions/get-restaurant";
 import { RestaurantOverviewCard } from "./_components/restaurant-overview-card";
 import { PhotoGallery } from "./_components/photo-gallery";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ReserveCta } from "./_components/reserve-cta";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
@@ -12,7 +15,10 @@ export default async function RestaurantDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const restaurantResult = await getRestaurant(id);
+  const [restaurantResult, session] = await Promise.all([
+    getRestaurant(id),
+    auth.api.getSession({ headers: await headers() }),
+  ]);
 
   if (!restaurantResult.success) {
     notFound();
@@ -51,16 +57,24 @@ export default async function RestaurantDetailPage({
         <Card>
           <CardHeader>
             <CardTitle>Ready to reserve?</CardTitle>
-            <CardDescription>Choose date, time, and table in the booking flow.</CardDescription>
+            <CardDescription>
+              {session
+                ? "Choose date, time, and table in the booking flow."
+                : "Sign in to book a table at this restaurant."}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link
-              href={`/restaurants/${id}/reserve`}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              Reserve a table
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            {session ? (
+              <Link
+                href={`/restaurants/${id}/reserve`}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                Reserve a table
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : (
+              <ReserveCta restaurantId={id} />
+            )}
           </CardContent>
         </Card>
       </div>
