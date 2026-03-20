@@ -37,6 +37,12 @@ export const employeeRepository = {
     });
   },
 
+  async countByUserId(userId: string) {
+    return prisma.restaurantEmployee.count({
+      where: { userId },
+    });
+  },
+
   async findRestaurantsByUserId(userId: string) {
     return prisma.restaurantEmployee.findMany({
       where: { userId },

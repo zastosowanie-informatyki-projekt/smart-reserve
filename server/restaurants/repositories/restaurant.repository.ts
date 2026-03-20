@@ -125,6 +125,12 @@ export const restaurantRepository = {
     });
   },
 
+  async countByOwnerId(ownerId: string) {
+    return prisma.restaurant.count({
+      where: { ownerId },
+    });
+  },
+
   async findOpeningHours(restaurantId: string) {
     return prisma.openingHours.findMany({
       where: { restaurantId },

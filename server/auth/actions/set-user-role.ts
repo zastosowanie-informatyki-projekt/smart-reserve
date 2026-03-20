@@ -12,16 +12,14 @@ export async function setUserRole(
   try {
     const session = await authService.requireAuth();
 
-    const alreadyOnboarded = await userService.isOnboarded(session.user.id);
-    if (alreadyOnboarded) {
-      return { success: false, error: "Role has already been set and cannot be changed." };
-    }
+    await userService.assertRoleChangeAllowed(session.user.id);
 
     await authRepository.updateUserRole(session.user.id, role, true);
     revalidatePath("/", "layout");
     return { success: true, data: undefined };
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to set user role";
     console.error("Failed to set user role:", error);
-    return { success: false, error: "Failed to set user role" };
+    return { success: false, error: message };
   }
 }
