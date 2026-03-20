@@ -1,12 +1,10 @@
 import { notFound } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { getRestaurant } from "@/server/restaurants/actions/get-restaurant";
-import { getFloorPlan } from "@/server/rooms/actions/get-floor-plan";
 import { RestaurantOverviewCard } from "./_components/restaurant-overview-card";
-import { ReservationForm } from "./_components/reservation-form";
 import { PhotoGallery } from "./_components/photo-gallery";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 export default async function RestaurantDetailPage({
   params,
@@ -14,18 +12,13 @@ export default async function RestaurantDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [restaurantResult, floorPlanResult, session] = await Promise.all([
-    getRestaurant(id),
-    getFloorPlan(id),
-    auth.api.getSession({ headers: await headers() }),
-  ]);
+  const restaurantResult = await getRestaurant(id);
 
   if (!restaurantResult.success) {
     notFound();
   }
 
   const restaurant = restaurantResult.data;
-  const floorPlan = floorPlanResult.success ? floorPlanResult.data : [];
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -55,12 +48,21 @@ export default async function RestaurantDetailPage({
           </Card>
         )}
 
-        <ReservationForm
-          restaurantId={id}
-          isAuthenticated={!!session}
-          openingHours={restaurant.openingHours}
-          floorPlan={floorPlan}
-        />
+        <Card>
+          <CardHeader>
+            <CardTitle>Ready to reserve?</CardTitle>
+            <CardDescription>Choose date, time, and table in the booking flow.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link
+              href={`/restaurants/${id}/reserve`}
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Reserve a table
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
