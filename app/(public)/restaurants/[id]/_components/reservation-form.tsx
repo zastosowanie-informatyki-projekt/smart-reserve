@@ -8,13 +8,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { getAvailableTables } from "@/server/tables/actions/get-available-tables";
 import { createReservation } from "@/server/reservations/actions/create-reservation";
 import { FloorPlanViewer } from "./floor-plan-viewer";
-import { Search, AlertCircle } from "lucide-react";
+import { Search, AlertCircle, CalendarDays } from "lucide-react";
 import { toUTC } from "@/lib/date-utils";
 import type { RoomWithFloorPlan } from "@/server/rooms/types";
+import { cn } from "@/lib/utils";
 
 type OpeningHoursEntry = {
   dayOfWeek: number;
@@ -62,6 +65,7 @@ export const ReservationForm = ({
   const [isBooking, startBookTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [today, setToday] = useState("");
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   useEffect(() => {
     setToday(new Date().toISOString().split("T")[0]);
@@ -110,6 +114,8 @@ export const ReservationForm = ({
   };
 
   const toUTCISO = (dateStr: string, timeStr: string) => toUTC(dateStr, timeStr).toISOString();
+
+  const selectedDate = date ? new Date(`${date}T00:00:00`) : undefined;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,7 +191,7 @@ export const ReservationForm = ({
     floorPlan.length > 0 && floorPlan.some((r) => (r.floorPlan?.elements.length ?? 0) > 0);
 
   return (
-    <Card>
+    <Card className="mx-auto w-full max-w-3xl">
       <CardHeader>
         <CardTitle>Make a Reservation</CardTitle>
         <CardDescription>Choose your date, time, and party size to see available tables.</CardDescription>
@@ -193,21 +199,75 @@ export const ReservationForm = ({
       <CardContent className="flex flex-col gap-6">
         {/* Step 1: Search */}
         <form onSubmit={handleSearch} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="date">Date</Label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5 sm:max-w-[13rem]">
+              <Label htmlFor="date">Date</Label>
+              <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+                <PopoverTrigger
+                  render={
+                    <Button
+                      id="date"
+                      type="button"
+                      variant="outline"
+                      className={cn(
+                        "justify-start text-left font-normal",
+                        !date && "text-muted-foreground",
+                      )}
+                    />
+                  }
+                >
+                  <CalendarDays className="mr-2 h-4 w-4" />
+                  {date || "Pick a date"}
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(nextDate) => {
+                      if (!nextDate) {
+                        return;
+                      }
+
+                      const formatted = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, "0")}-${String(nextDate.getDate()).padStart(2, "0")}`;
+                      if (today && formatted < today) {
+                        return;
+                      }
+
+                      setDate(formatted);
+                      setStartTimeSlot("");
+                      setEndTimeSlot("");
+                      resetSearch();
+                      setIsDatePickerOpen(false);
+                    }}
+                    disabled={(calendarDate) => {
+                      if (!today) {
+                        return false;
+                      }
+                      const yyyy = calendarDate.getFullYear();
+                      const mm = String(calendarDate.getMonth() + 1).padStart(2, "0");
+                      const dd = String(calendarDate.getDate()).padStart(2, "0");
+                      return `${yyyy}-${mm}-${dd}` < today;
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="flex flex-col gap-1.5 sm:max-w-[11rem]">
+              <Label htmlFor="guestCount">Number of Guests</Label>
               <Input
-                id="date"
-                type="date"
+                id="guestCount"
+                type="number"
+                min={1}
                 required
-                min={today || undefined}
-                value={date}
-              onChange={(e) => {
-                setDate(e.target.value);
-                setStartTimeSlot("");
-                setEndTimeSlot("");
-                resetSearch();
-              }}
-            />
+                placeholder="2"
+                value={guestCount}
+                onChange={(e) => {
+                  setGuestCount(e.target.value);
+                  resetSearch();
+                }}
+              />
+            </div>
           </div>
 
           {date && hasOpeningHours && isDayClosed && (
@@ -300,22 +360,6 @@ export const ReservationForm = ({
                 />
               )}
             </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="guestCount">Number of Guests</Label>
-            <Input
-              id="guestCount"
-              type="number"
-              min={1}
-              required
-              placeholder="2"
-              value={guestCount}
-              onChange={(e) => {
-                setGuestCount(e.target.value);
-                resetSearch();
-              }}
-            />
           </div>
 
           <Button

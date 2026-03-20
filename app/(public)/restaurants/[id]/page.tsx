@@ -3,8 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getRestaurant } from "@/server/restaurants/actions/get-restaurant";
 import { getFloorPlan } from "@/server/rooms/actions/get-floor-plan";
-import { RestaurantInfo } from "./_components/restaurant-info";
-import { OpeningHoursDisplay } from "./_components/opening-hours-display";
+import { RestaurantOverviewCard } from "./_components/restaurant-overview-card";
 import { ReservationForm } from "./_components/reservation-form";
 import { PhotoGallery } from "./_components/photo-gallery";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +30,7 @@ export default async function RestaurantDetailPage({
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex flex-col gap-6">
-        <RestaurantInfo
+        <RestaurantOverviewCard
           name={restaurant.name}
           description={restaurant.description}
           street={restaurant.street}
@@ -41,6 +40,7 @@ export default async function RestaurantDetailPage({
           email={restaurant.email}
           website={restaurant.website}
           cuisines={restaurant.cuisines}
+          openingHours={restaurant.openingHours}
         />
 
         {restaurant.photos.length > 0 && (
@@ -54,8 +54,6 @@ export default async function RestaurantDetailPage({
             </CardContent>
           </Card>
         )}
-
-        <OpeningHoursDisplay hours={restaurant.openingHours} />
 
         <ReservationForm
           restaurantId={id}
