@@ -19,7 +19,6 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "
   CONFIRMED: "default",
   CANCELLED: "destructive",
   COMPLETED: "secondary",
-  NO_SHOW: "secondary",
 };
 
 const formatDateTime = (date: Date) => {

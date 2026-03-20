@@ -141,7 +141,7 @@ export const reservationRepository = {
     return prisma.reservation.count({
       where: {
         table: { roomId },
-        status: { notIn: ["CANCELLED", "NO_SHOW", "COMPLETED"] },
+        status: { notIn: ["CANCELLED", "COMPLETED", "NO_SHOW"] },
         endTime: { gt: new Date() },
       },
     });
@@ -151,7 +151,7 @@ export const reservationRepository = {
     return prisma.reservation.count({
       where: {
         tableId,
-        status: { notIn: ["CANCELLED", "NO_SHOW", "COMPLETED"] },
+        status: { notIn: ["CANCELLED", "COMPLETED", "NO_SHOW"] },
         endTime: { gt: new Date() },
       },
     });
@@ -162,7 +162,7 @@ export const reservationRepository = {
       where: {
         userId,
         endTime: { gt: new Date() },
-        status: { notIn: ["CANCELLED", "NO_SHOW", "COMPLETED"] },
+        status: { notIn: ["CANCELLED", "COMPLETED", "NO_SHOW"] },
       },
     });
   },

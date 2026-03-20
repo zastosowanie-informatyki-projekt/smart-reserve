@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { updateReservationStatus } from "@/server/reservations/actions/update-reservation-status";
-import { MoreHorizontal, Check, X, AlertTriangle } from "lucide-react";
+import { MoreHorizontal, Check, X } from "lucide-react";
 import { APP_TIMEZONE } from "@/lib/date-utils";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -25,8 +25,9 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "
   CONFIRMED: "default",
   CANCELLED: "destructive",
   COMPLETED: "secondary",
-  NO_SHOW: "secondary",
 };
+
+const STATUS_FILTERS = ["ALL", "PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"] as const;
 
 const formatDateTime = (date: Date) => {
   return new Date(date).toLocaleString("en-US", {
@@ -55,6 +56,7 @@ export const ReservationManagement = ({
 }) => {
 
   const [isPending, startTransition] = useTransition();
+  const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTERS)[number]>("ALL");
 
   const handleStatusChange = (id: string, status: string) => {
     startTransition(async () => {
@@ -62,10 +64,22 @@ export const ReservationManagement = ({
     });
   };
 
-  const pending = reservations.filter((r) => r.status === "PENDING");
-  const confirmed = reservations.filter((r) => r.status === "CONFIRMED");
-  const rest = reservations.filter(
-    (r) => r.status !== "PENDING" && r.status !== "CONFIRMED",
+  const filteredReservations = useMemo(
+    () =>
+      statusFilter === "ALL"
+        ? reservations
+        : reservations.filter((reservation) => reservation.status === statusFilter),
+    [reservations, statusFilter],
+  );
+
+  const groupedReservations = useMemo(
+    () => ({
+      PENDING: filteredReservations.filter((reservation) => reservation.status === "PENDING"),
+      CONFIRMED: filteredReservations.filter((reservation) => reservation.status === "CONFIRMED"),
+      CANCELLED: filteredReservations.filter((reservation) => reservation.status === "CANCELLED"),
+      COMPLETED: filteredReservations.filter((reservation) => reservation.status === "COMPLETED"),
+    }),
+    [filteredReservations],
   );
 
   const renderReservation = (reservation: (typeof reservations)[0]) => (
@@ -136,14 +150,6 @@ export const ReservationManagement = ({
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() =>
-                  handleStatusChange(reservation.id, "NO_SHOW")
-                }
-              >
-                <AlertTriangle className="mr-2 h-4 w-4" />
-                Mark No-Show
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
                   handleStatusChange(reservation.id, "CANCELLED")
                 }
                 className="text-destructive"
@@ -165,39 +171,64 @@ export const ReservationManagement = ({
         <CardDescription>
           View and manage incoming reservations
         </CardDescription>
+        <div className="flex flex-wrap gap-2 pt-2">
+          {STATUS_FILTERS.map((status) => (
+            <Button
+              key={status}
+              type="button"
+              size="sm"
+              variant={statusFilter === status ? "default" : "outline"}
+              onClick={() => setStatusFilter(status)}
+            >
+              {status === "ALL" ? "All" : status}
+            </Button>
+          ))}
+        </div>
       </CardHeader>
       <CardContent>
-        {reservations.length === 0 ? (
+        {filteredReservations.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No reservations yet.
+            No reservations found for this filter.
           </p>
         ) : (
           <div className="flex flex-col gap-6">
-            {pending.length > 0 && (
+            {groupedReservations.PENDING.length > 0 && (
               <div className="flex flex-col gap-3">
                 <h3 className="text-sm font-semibold">
-                  Pending Approval ({pending.length})
+                  Pending Approval ({groupedReservations.PENDING.length})
                 </h3>
                 <div className="grid gap-3">
-                  {pending.map(renderReservation)}
+                  {groupedReservations.PENDING.map(renderReservation)}
                 </div>
               </div>
             )}
-            {confirmed.length > 0 && (
+            {groupedReservations.CONFIRMED.length > 0 && (
               <div className="flex flex-col gap-3">
                 <h3 className="text-sm font-semibold">
-                  Confirmed ({confirmed.length})
+                  Confirmed ({groupedReservations.CONFIRMED.length})
                 </h3>
                 <div className="grid gap-3">
-                  {confirmed.map(renderReservation)}
+                  {groupedReservations.CONFIRMED.map(renderReservation)}
                 </div>
               </div>
             )}
-            {rest.length > 0 && (
+            {groupedReservations.CANCELLED.length > 0 && (
               <div className="flex flex-col gap-3">
-                <h3 className="text-sm font-semibold">Past & Other</h3>
+                <h3 className="text-sm font-semibold">
+                  Cancelled ({groupedReservations.CANCELLED.length})
+                </h3>
                 <div className="grid gap-3">
-                  {rest.map(renderReservation)}
+                  {groupedReservations.CANCELLED.map(renderReservation)}
+                </div>
+              </div>
+            )}
+            {groupedReservations.COMPLETED.length > 0 && (
+              <div className="flex flex-col gap-3">
+                <h3 className="text-sm font-semibold">
+                  Completed ({groupedReservations.COMPLETED.length})
+                </h3>
+                <div className="grid gap-3">
+                  {groupedReservations.COMPLETED.map(renderReservation)}
                 </div>
               </div>
             )}

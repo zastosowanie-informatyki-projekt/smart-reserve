@@ -8,7 +8,7 @@ import type { CreateReservationInput, UpdateReservationInput } from "../types";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   PENDING: ["CONFIRMED", "CANCELLED"],
-  CONFIRMED: ["CANCELLED", "COMPLETED", "NO_SHOW"],
+  CONFIRMED: ["CANCELLED", "COMPLETED"],
 };
 
 export const reservationService = {
@@ -164,7 +164,7 @@ export const reservationService = {
     return reservationRepository.updateStatus(id, "CANCELLED");
   },
 
-  async updateStatus(id: string, status: "CONFIRMED" | "CANCELLED" | "COMPLETED" | "NO_SHOW") {
+  async updateStatus(id: string, status: "CONFIRMED" | "CANCELLED" | "COMPLETED") {
     const session = await authService.requireAuth();
     const reservation = await reservationRepository.findById(id);
 
@@ -186,7 +186,6 @@ export const reservationService = {
     const statusLabels: Record<string, string> = {
       CONFIRMED: "confirmed",
       CANCELLED: "cancelled",
-      NO_SHOW: "marked as no-show",
     };
     const label = statusLabels[status];
     if (label) {
