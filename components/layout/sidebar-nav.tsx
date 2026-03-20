@@ -43,11 +43,7 @@ const SidebarLinks = ({ items }: { items: NavItem[] }) => {
         const Icon = iconByKey[item.icon];
 
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={navLinkClassName}
-          >
+          <Link key={item.href} href={item.href} className={navLinkClassName}>
             <Icon className="mr-2 h-4 w-4" />
             {item.label}
           </Link>
@@ -94,20 +90,8 @@ export const SidebarNav = async () => {
               <SheetTitle>Navigation</SheetTitle>
               <SheetDescription>Browse pages and manage your account.</SheetDescription>
             </SheetHeader>
-            <div className="flex h-full flex-col justify-between px-4 py-4">
+            <div className="flex flex-col gap-6 px-4 py-4">
               <SidebarLinks items={navItems} />
-              <div className="space-y-4 border-t pt-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                    Appearance
-                  </span>
-                  <ThemeToggle />
-                </div>
-                <div className="flex items-center justify-end gap-2">
-                  {session && <NotificationBell />}
-                  <NavbarAuth session={session} />
-                </div>
-              </div>
             </div>
           </SheetContent>
         </Sheet>
@@ -119,6 +103,7 @@ export const SidebarNav = async () => {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           {session && <NotificationBell />}
+          <NavbarAuth session={session} />
         </div>
       </div>
     </>

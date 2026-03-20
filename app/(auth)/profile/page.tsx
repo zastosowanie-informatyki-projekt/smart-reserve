@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { RoleSwitcher } from "./_components/role-switcher";
 
 export const metadata = {
   title: "Profile | TableSpot",
@@ -70,6 +71,16 @@ export default async function ProfilePage() {
               </p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Role Settings</CardTitle>
+          <CardDescription>Update how you use TableSpot</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RoleSwitcher currentRole={role} />
         </CardContent>
       </Card>
     </div>

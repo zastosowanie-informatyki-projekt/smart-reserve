@@ -14,12 +14,10 @@ import { User, LogOut, Settings } from "lucide-react";
 
 export const NavbarAuth = ({
   session,
-  hasRestaurants: _hasRestaurants,
 }: {
   session: {
     user: { name: string; email: string; image?: string | null };
   } | null;
-  hasRestaurants?: boolean;
 }) => {
   const handleSignIn = async () => {
     await authClient.signIn.social({ provider: "google" });
@@ -41,17 +39,9 @@ export const NavbarAuth = ({
   return (
     <div className="flex items-center gap-2">
       <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button variant="ghost" size="icon" className="rounded-full" />
-          }
-        >
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="rounded-full" />}>
           {session.user.image ? (
-            <img
-              src={session.user.image}
-              alt={session.user.name}
-              className="h-8 w-8 rounded-full"
-            />
+            <img src={session.user.image} alt={session.user.name} className="h-8 w-8 rounded-full" />
           ) : (
             <User className="h-4 w-4" />
           )}
@@ -59,9 +49,7 @@ export const NavbarAuth = ({
         <DropdownMenuContent align="end" className="w-56">
           <div className="px-2 py-1.5">
             <p className="text-sm font-medium">{session.user.name}</p>
-            <p className="text-xs text-muted-foreground">
-              {session.user.email}
-            </p>
+            <p className="text-xs text-muted-foreground">{session.user.email}</p>
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem render={<Link href="/profile" />}>
