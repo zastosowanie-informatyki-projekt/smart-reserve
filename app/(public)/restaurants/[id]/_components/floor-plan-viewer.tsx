@@ -118,6 +118,7 @@ const DecorationNode = ({
 }) => {
   const isDoor = el.label === "DOOR";
   const isWindow = el.label === "WINDOW";
+  const isWall = el.label === "WALL";
   const fill = isDoor ? "#92400e" : isWindow ? "#bae6fd" : (el.fill ?? "#e2e8f0");
   const stroke = isDoor ? "#78350f" : isWindow ? "#0284c7" : (el.stroke ?? "#94a3b8");
   const textFill = isDoor ? "#fff7ed" : isWindow ? "#0c4a6e" : "#475569";
@@ -130,30 +131,26 @@ const DecorationNode = ({
         rotation={el.rotation}
         points={[0, 0, el.width, 0]}
         stroke={stroke}
-        strokeWidth={2}
+        strokeWidth={isWall ? 8 : 2}
+        lineCap={isWall ? "square" : "butt"}
         listening={false}
       />
     );
   }
 
   return (
-    <>
+    <Group x={el.x} y={el.y} rotation={el.rotation} listening={false}>
       <Rect
-        x={el.x}
-        y={el.y}
-        rotation={el.rotation}
         width={el.width}
         height={el.height}
         fill={fill}
         stroke={stroke}
         strokeWidth={1}
         cornerRadius={isDoor ? 2 : 0}
-        listening={false}
       />
       {el.label && (
         <Text
-          x={el.x}
-          y={el.y + el.height / 2 - 6}
+          y={el.height / 2 - 6}
           width={el.width}
           text={el.label}
           fontSize={11}
@@ -163,7 +160,7 @@ const DecorationNode = ({
           listening={false}
         />
       )}
-    </>
+    </Group>
   );
 };
 

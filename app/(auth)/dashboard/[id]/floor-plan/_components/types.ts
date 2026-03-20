@@ -36,4 +36,4 @@ export interface RoomEntry {
 }
 
 export type EditorTool = "select" | "add-table";
-export type DecorationPreset = "door" | "window";
+export type DecorationPreset = "door" | "window" | "wall";

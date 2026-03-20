@@ -8,9 +8,17 @@ import type { LocalElement, EditorTool } from "./types";
 const CANVAS_WIDTH = 900;
 const CANVAS_HEIGHT = 600;
 const GRID_SIZE = 20;
+const ROTATION_SNAP_STEP = 45;
+const ROTATION_SNAPS = [0, 45, 90, 135, 180, 225, 270, 315];
 
 function snapToGrid(value: number): number {
   return Math.round(value / GRID_SIZE) * GRID_SIZE;
+}
+
+function snapRotation(value: number): number {
+  const snapped = Math.round(value / ROTATION_SNAP_STEP) * ROTATION_SNAP_STEP;
+  const normalized = ((snapped % 360) + 360) % 360;
+  return normalized;
 }
 
 // ─── Table shape ──────────────────────────────────────────────────────────────
@@ -57,7 +65,7 @@ const TableElement = ({
       y: snapToGrid(node.y()),
       width: snapToGrid(Math.max(GRID_SIZE, el.width * scaleX)),
       height: snapToGrid(Math.max(GRID_SIZE, el.height * scaleY)),
-      rotation: node.rotation(),
+      rotation: snapRotation(node.rotation()),
     });
   };
 
@@ -119,6 +127,8 @@ const TableElement = ({
         <Transformer
           ref={trRef}
           rotateEnabled
+          rotationSnaps={ROTATION_SNAPS}
+          rotationSnapTolerance={8}
           keepRatio={false}
           boundBoxFunc={(oldBox, newBox) => {
             if (newBox.width < GRID_SIZE || newBox.height < GRID_SIZE) return oldBox;
@@ -142,11 +152,11 @@ const DecorationElement = ({
   onSelect: () => void;
   onChange: (updated: Partial<LocalElement>) => void;
 }) => {
-  const shapeRef = useRef<Konva.Shape>(null);
+  const groupRef = useRef<Konva.Group>(null);
   const lineRef = useRef<Konva.Line>(null);
   const trRef = useRef<Konva.Transformer>(null);
 
-  const activeRef = el.shape === "line" ? lineRef : shapeRef;
+  const activeRef = el.shape === "line" ? lineRef : groupRef;
 
   useEffect(() => {
     const node = activeRef.current;
@@ -181,7 +191,7 @@ const DecorationElement = ({
       y: snapToGrid(node.y()),
       width: snapToGrid(Math.max(GRID_SIZE, el.width * scaleX)),
       height: snapToGrid(Math.max(GRID_SIZE, el.height * scaleY)),
-      rotation: node.rotation(),
+      rotation: snapRotation(node.rotation()),
     });
   };
 
@@ -195,7 +205,8 @@ const DecorationElement = ({
           rotation={el.rotation}
           points={[0, 0, el.width, 0]}
           stroke={stroke}
-          strokeWidth={isSelected ? 3 : 2}
+          strokeWidth={isSelected ? 10 : 8}
+          lineCap="square"
           draggable
           onClick={onSelect}
           onTap={onSelect}
@@ -206,6 +217,8 @@ const DecorationElement = ({
           <Transformer
             ref={trRef}
             rotateEnabled
+            rotationSnaps={ROTATION_SNAPS}
+            rotationSnapTolerance={8}
             enabledAnchors={["middle-left", "middle-right"]}
           />
         )}
@@ -215,40 +228,44 @@ const DecorationElement = ({
 
   return (
     <>
-      <Rect
-        ref={shapeRef as unknown as React.RefObject<Konva.Rect>}
+      <Group
+        ref={groupRef}
         x={el.x}
         y={el.y}
         rotation={el.rotation}
-        width={el.width}
-        height={el.height}
-        fill={fill}
-        stroke={stroke}
-        strokeWidth={strokeWidth}
-        cornerRadius={isDoor ? 2 : 0}
         draggable
         onClick={onSelect}
         onTap={onSelect}
         onDragEnd={handleDragEnd}
         onTransformEnd={handleTransformEnd}
-      />
-      {el.label && (
-        <Text
-          x={el.x}
-          y={el.y + el.height / 2 - 6}
+      >
+        <Rect
           width={el.width}
-          text={el.label}
-          fontSize={11}
-          fontStyle="bold"
-          fill={isDoor ? "#fff7ed" : isWindow ? "#0c4a6e" : "#475569"}
-          align="center"
-          listening={false}
+          height={el.height}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={strokeWidth}
+          cornerRadius={isDoor ? 2 : 0}
         />
-      )}
+        {el.label && (
+          <Text
+            y={el.height / 2 - 6}
+            width={el.width}
+            text={el.label}
+            fontSize={11}
+            fontStyle="bold"
+            fill={isDoor ? "#fff7ed" : isWindow ? "#0c4a6e" : "#475569"}
+            align="center"
+            listening={false}
+          />
+        )}
+      </Group>
       {isSelected && (
         <Transformer
           ref={trRef}
           rotateEnabled
+          rotationSnaps={ROTATION_SNAPS}
+          rotationSnapTolerance={8}
           keepRatio={false}
           boundBoxFunc={(oldBox, newBox) => {
             if (newBox.width < GRID_SIZE || newBox.height < GRID_SIZE) return oldBox;

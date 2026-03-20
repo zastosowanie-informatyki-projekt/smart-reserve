@@ -375,6 +375,15 @@ export const RoomSelector = ({
           >
             + Window
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="justify-start"
+            onClick={() => onAddDecoration("wall")}
+            disabled={!activeRoomId}
+          >
+            + Wall
+          </Button>
         </div>
       </div>
 

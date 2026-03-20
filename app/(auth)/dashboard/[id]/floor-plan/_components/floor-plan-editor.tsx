@@ -168,18 +168,19 @@ export const FloorPlanEditor = ({
   const handleAddDecoration = useCallback(
     (preset: DecorationPreset) => {
       const isDoor = preset === "door";
+      const isWall = preset === "wall";
       const newEl: LocalElement = {
         id: crypto.randomUUID(),
         type: "decoration",
         x: Math.round(CANVAS_WIDTH / 2 / 20) * 20 - 40,
         y: Math.round(CANVAS_HEIGHT / 2 / 20) * 20 - 20,
-        width: isDoor ? 60 : 120,
-        height: isDoor ? 60 : 20,
+        width: isWall ? 200 : isDoor ? 60 : 120,
+        height: isWall ? 12 : isDoor ? 24 : 20,
         rotation: 0,
-        shape: "rect",
-        fill: isDoor ? "#92400e" : "#bae6fd",
-        stroke: isDoor ? "#78350f" : "#0284c7",
-        label: isDoor ? "DOOR" : "WINDOW",
+        shape: isWall ? "line" : "rect",
+        fill: isWall ? "#334155" : isDoor ? "#92400e" : "#bae6fd",
+        stroke: isWall ? "#0f172a" : isDoor ? "#78350f" : "#0284c7",
+        label: isWall ? "WALL" : isDoor ? "DOOR" : "WINDOW",
       };
       setCurrentElements((prev) => [...prev, newEl]);
     },
@@ -392,6 +393,8 @@ export const FloorPlanEditor = ({
                   ? "Door"
                   : selectedEl.label === "WINDOW"
                     ? "Window"
+                    : selectedEl.label === "WALL"
+                      ? "Wall"
                     : "Decoration";
               return (
                 <div className="mt-2 flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-1.5 text-xs">
