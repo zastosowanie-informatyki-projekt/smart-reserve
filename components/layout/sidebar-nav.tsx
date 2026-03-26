@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -36,11 +37,30 @@ const iconByKey = {
   dashboard: LayoutDashboard,
 };
 
-const SidebarLinks = ({ items }: { items: NavItem[] }) => {
+const SidebarLinks = ({
+  items,
+  closeOnNavigate = false,
+}: {
+  items: NavItem[];
+  closeOnNavigate?: boolean;
+}) => {
   return (
     <nav className="flex flex-col gap-1">
       {items.map((item) => {
         const Icon = iconByKey[item.icon];
+
+        if (closeOnNavigate) {
+          return (
+            <SheetClose
+              key={item.href}
+              nativeButton={false}
+              render={<Link href={item.href} className={navLinkClassName} />}
+            >
+              <Icon className="mr-2 h-4 w-4" />
+              {item.label}
+            </SheetClose>
+          );
+        }
 
         return (
           <Link key={item.href} href={item.href} className={navLinkClassName}>
@@ -91,7 +111,7 @@ export const SidebarNav = async () => {
               <SheetDescription>Browse pages and manage your account.</SheetDescription>
             </SheetHeader>
             <div className="flex flex-col gap-6 px-4 py-4">
-              <SidebarLinks items={navItems} />
+              <SidebarLinks items={navItems} closeOnNavigate />
             </div>
           </SheetContent>
         </Sheet>
