@@ -15,7 +15,32 @@ export const FloorPlanLoading = () => {
 
       <div className="flex flex-1 overflow-hidden">
         <div className="w-56 shrink-0 border-r p-3">
-          <Skeleton className="h-full w-full" />
+          <div className="flex h-full flex-col gap-3">
+            <Skeleton className="h-7 w-full" />
+            <Skeleton className="h-9 w-full" />
+
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-20" />
+              <div className="grid grid-cols-2 gap-2">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </div>
+            </div>
+
+            <div className="mt-auto space-y-2">
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-full" />
+            </div>
+          </div>
         </div>
         <div className="flex flex-1 p-4">
           <Skeleton className="h-full w-full" />
