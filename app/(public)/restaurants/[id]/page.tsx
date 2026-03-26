@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { Suspense } from "react";
 import { getRestaurant } from "@/server/restaurants/actions/get-restaurant";
 import { RestaurantOverviewCard } from "./_components/restaurant-overview-card";
 import { PhotoGallery } from "./_components/photo-gallery";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReserveCta } from "./_components/reserve-cta";
+import { PhotoGallerySkeleton } from "./_components/photo-gallery-skeleton";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
@@ -26,6 +28,19 @@ export default async function RestaurantDetailPage({
 
   const restaurant = restaurantResult.data;
 
+  const photoGallery =
+    restaurant.photos.length > 0 ? (
+      <Card>
+        <CardHeader>
+          <CardTitle>Photos</CardTitle>
+          <CardDescription>Take a look at the space before you book.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PhotoGallery photos={restaurant.photos} />
+        </CardContent>
+      </Card>
+    ) : null;
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex flex-col gap-6">
@@ -42,17 +57,9 @@ export default async function RestaurantDetailPage({
           openingHours={restaurant.openingHours}
         />
 
-        {restaurant.photos.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Photos</CardTitle>
-              <CardDescription>Take a look at the space before you book.</CardDescription>
-            </CardHeader>
-            <CardContent>
-            <PhotoGallery photos={restaurant.photos} />
-            </CardContent>
-          </Card>
-        )}
+        <Suspense fallback={<PhotoGallerySkeleton />}>
+          {photoGallery}
+        </Suspense>
 
         <Card>
           <CardHeader>

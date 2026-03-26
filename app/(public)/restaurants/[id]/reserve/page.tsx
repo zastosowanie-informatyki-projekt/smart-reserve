@@ -2,10 +2,12 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { Suspense } from "react";
 import { getRestaurant } from "@/server/restaurants/actions/get-restaurant";
 import { getFloorPlan } from "@/server/rooms/actions/get-floor-plan";
 import { ArrowLeft } from "lucide-react";
 import { ReservationForm } from "../_components/reservation-form";
+import { ReservationFormSkeleton } from "../_components/reservation-form-skeleton";
 
 export default async function RestaurantReservePage({
   params,
@@ -48,12 +50,14 @@ export default async function RestaurantReservePage({
         <p className="text-muted-foreground">Find available tables and complete your booking.</p>
       </div>
 
-      <ReservationForm
-        restaurantId={id}
-        isAuthenticated={true}
-        openingHours={restaurant.openingHours}
-        floorPlan={floorPlan}
-      />
+      <Suspense fallback={<ReservationFormSkeleton />}>
+        <ReservationForm
+          restaurantId={id}
+          isAuthenticated={true}
+          openingHours={restaurant.openingHours}
+          floorPlan={floorPlan}
+        />
+      </Suspense>
     </div>
   );
 }

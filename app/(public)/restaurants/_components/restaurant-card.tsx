@@ -1,11 +1,5 @@
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin } from "lucide-react";
 import { CUISINE_LABEL } from "@/lib/cuisines";
@@ -47,9 +41,7 @@ export const RestaurantCard = ({
         </CardHeader>
         {description && (
           <CardContent>
-            <p className="line-clamp-2 text-sm text-muted-foreground">
-              {description}
-            </p>
+            <p className="line-clamp-2 text-sm text-muted-foreground">{description}</p>
           </CardContent>
         )}
       </Card>
