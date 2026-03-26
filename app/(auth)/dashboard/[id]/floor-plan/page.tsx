@@ -1,38 +1,18 @@
 import { redirect, notFound } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getFloorPlan } from "@/server/rooms/actions/get-floor-plan";
 import { getRooms } from "@/server/rooms/actions/get-rooms";
 import { FloorPlanEditor } from "./_components/floor-plan-editor";
+import { getDashboardAccess } from "../_lib/get-dashboard-access";
 
 export default async function FloorPlanPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  if (!session) {
-    redirect("/");
-  }
-
   const { id } = await params;
 
-  const isOwner = await prisma.restaurant.findFirst({
-    where: { id, ownerId: session.user.id },
-    select: { id: true, name: true },
-  });
-  const isEmployee = !isOwner
-    ? await prisma.restaurantEmployee.findFirst({
-        where: { restaurantId: id, userId: session.user.id },
-        select: { id: true },
-      })
-    : null;
-
-  if (!isOwner && !isEmployee) {
-    redirect("/dashboard");
-  }
+  await getDashboardAccess(id);
 
   const restaurant = await prisma.restaurant.findUnique({
     where: { id },

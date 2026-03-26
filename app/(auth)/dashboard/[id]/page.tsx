@@ -1,7 +1,4 @@
 import { redirect, notFound } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { getRestaurant } from "@/server/restaurants/actions/get-restaurant";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,34 +9,12 @@ import { OpeningHoursForm } from "./_components/opening-hours-form";
 import { PhotoManagement } from "./_components/photo-management";
 import { EmployeeManagement } from "./_components/employee-management";
 import { LayoutDashboard, ArrowUpRight, CalendarDays } from "lucide-react";
+import { getDashboardAccess } from "./_lib/get-dashboard-access";
 
 export default async function ManageRestaurantPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    redirect("/");
-  }
-
   const { id } = await params;
-
-  const isOwner = await prisma.restaurant.findFirst({
-    where: { id, ownerId: session.user.id },
-    select: { id: true },
-  });
-  const isEmployee = !isOwner
-    ? await prisma.restaurantEmployee.findFirst({
-        where: { restaurantId: id, userId: session.user.id },
-        select: { id: true },
-      })
-    : null;
-
-  if (!isOwner && !isEmployee) {
-    redirect("/dashboard");
-  }
-
-  const owner = !!isOwner;
+  const access = await getDashboardAccess(id);
+  const owner = access.isOwner;
 
   const restaurantResult = await getRestaurant(id);
 

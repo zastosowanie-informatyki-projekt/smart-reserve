@@ -1,50 +1,23 @@
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { prisma } from "@/lib/prisma";
 import { getRestaurant } from "@/server/restaurants/actions/get-restaurant";
 import { getRestaurantReservations } from "@/server/reservations/actions/get-restaurant-reservations";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Building2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { ReservationManagement } from "../_components/reservation-management";
+import { getDashboardAccess } from "../_lib/get-dashboard-access";
 
 const linkButtonClassName =
   "inline-flex h-7 items-center gap-1 rounded-[min(var(--radius-md),12px)] border border-transparent px-2.5 text-[0.8rem] font-medium whitespace-nowrap text-muted-foreground transition-all outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
-
-const outlineLinkButtonClassName =
-  "inline-flex h-7 items-center gap-1 rounded-[min(var(--radius-md),12px)] border border-border bg-background px-2.5 text-[0.8rem] font-medium whitespace-nowrap text-foreground transition-all outline-none hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
 export default async function ManageRestaurantReservationsPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    redirect("/");
-  }
-
   const { id } = await params;
 
-  const isOwner = await prisma.restaurant.findFirst({
-    where: { id, ownerId: session.user.id },
-    select: { id: true },
-  });
-
-  const isEmployee = !isOwner
-    ? await prisma.restaurantEmployee.findFirst({
-        where: { restaurantId: id, userId: session.user.id },
-        select: { id: true },
-      })
-    : null;
-
-  if (!isOwner && !isEmployee) {
-    redirect("/dashboard");
-  }
+  await getDashboardAccess(id);
 
   const [restaurantResult, reservationsResult] = await Promise.all([
     getRestaurant(id),
