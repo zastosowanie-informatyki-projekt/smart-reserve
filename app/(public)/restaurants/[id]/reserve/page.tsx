@@ -7,7 +7,7 @@ import { getRestaurant } from "@/server/restaurants/actions/get-restaurant";
 import { getFloorPlan } from "@/server/rooms/actions/get-floor-plan";
 import { ArrowLeft } from "lucide-react";
 import { ReservationForm } from "../_components/reservation-form";
-import { ReservationFormSkeleton } from "../_components/reservation-form-skeleton";
+import { ReservationFormLoading } from "../_components/reservation-form-loading";
 
 export default async function RestaurantReservePage({
   params,
@@ -50,7 +50,7 @@ export default async function RestaurantReservePage({
         <p className="text-muted-foreground">Find available tables and complete your booking.</p>
       </div>
 
-      <Suspense fallback={<ReservationFormSkeleton />}>
+      <Suspense fallback={<ReservationFormLoading />}>
         <ReservationForm
           restaurantId={id}
           isAuthenticated={true}

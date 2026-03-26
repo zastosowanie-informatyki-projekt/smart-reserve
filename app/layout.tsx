@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
+import { AppContentLoading } from "@/components/layout/app-content-loading";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,7 +32,11 @@ export default function RootLayout({
       >
         <div className="min-h-screen bg-background md:flex">
           <SidebarNav />
-          <main className="min-w-0 flex-1 md:min-h-screen">{children}</main>
+          <main className="min-w-0 flex-1 md:min-h-screen">
+            <Suspense fallback={<AppContentLoading />}>
+              {children}
+            </Suspense>
+          </main>
         </div>
       </body>
     </html>

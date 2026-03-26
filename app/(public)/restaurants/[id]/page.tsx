@@ -7,7 +7,7 @@ import { RestaurantOverviewCard } from "./_components/restaurant-overview-card";
 import { PhotoGallery } from "./_components/photo-gallery";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReserveCta } from "./_components/reserve-cta";
-import { PhotoGallerySkeleton } from "./_components/photo-gallery-skeleton";
+import { PhotoGalleryLoading } from "./_components/photo-gallery-loading";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
@@ -57,7 +57,7 @@ export default async function RestaurantDetailPage({
           openingHours={restaurant.openingHours}
         />
 
-        <Suspense fallback={<PhotoGallerySkeleton />}>
+        <Suspense fallback={<PhotoGalleryLoading />}>
           {photoGallery}
         </Suspense>
 

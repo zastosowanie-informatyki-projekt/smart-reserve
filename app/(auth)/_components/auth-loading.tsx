@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function AuthLoading() {
+export const AuthLoading = () => {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-8 space-y-2">
@@ -15,4 +15,4 @@ export default function AuthLoading() {
       </div>
     </div>
   );
-}
+};

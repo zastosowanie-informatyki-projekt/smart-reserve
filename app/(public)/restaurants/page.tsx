@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { getRestaurants } from "@/server/restaurants/actions/get-restaurants";
 import { RestaurantFilters } from "./_components/restaurant-filters";
 import { RestaurantList } from "./_components/restaurant-list";
-import { RestaurantListSkeleton } from "./_components/restaurant-list-skeleton";
+import { RestaurantListLoading } from "./_components/restaurant-list-loading";
 
 export const metadata = {
   title: "Browse Restaurants | TableSpot",
@@ -35,7 +35,7 @@ export default async function RestaurantsPage({
           <RestaurantFilters />
         </Suspense>
       </div>
-      <Suspense fallback={<RestaurantListSkeleton />}>
+      <Suspense fallback={<RestaurantListLoading />}>
         <RestaurantResults city={params.city} cuisine={params.cuisine} />
       </Suspense>
     </div>
