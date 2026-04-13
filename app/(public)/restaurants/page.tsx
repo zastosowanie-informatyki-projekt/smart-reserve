@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getRestaurants } from "@/server/restaurants/actions/get-restaurants";
 import { RestaurantFilters } from "./_components/restaurant-filters";
+import { RestaurantAssistantChat } from "./_components/restaurant-assistant-chat";
 import { RestaurantList } from "./_components/restaurant-list";
 import { RestaurantListLoading } from "./_components/restaurant-list-loading";
 
@@ -38,6 +39,7 @@ export default async function RestaurantsPage({
       <Suspense fallback={<RestaurantListLoading />}>
         <RestaurantResults city={params.city} cuisine={params.cuisine} />
       </Suspense>
+      <RestaurantAssistantChat />
     </div>
   );
 }

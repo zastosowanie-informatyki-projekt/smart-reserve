@@ -111,6 +111,34 @@ export const restaurantRepository = {
     });
   },
 
+  /** Assistant chat: optional city substring and/or any-of cuisine tags (OR within tags). */
+  async findManyForChat(filters: { cityContains?: string; cuisineTags?: CuisineType[] }) {
+    const { cityContains, cuisineTags } = filters;
+    const hasTags = cuisineTags != null && cuisineTags.length > 0;
+    return prisma.restaurant.findMany({
+      where: {
+        ...(cityContains && {
+          city: { contains: cityContains, mode: "insensitive" as const },
+        }),
+        ...(hasTags && {
+          cuisines: { hasSome: cuisineTags },
+        }),
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        street: true,
+        buildingNumber: true,
+        city: true,
+        cuisines: true,
+        imageUrl: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 40,
+    });
+  },
+
   async findByOwnerId(ownerId: string) {
     return prisma.restaurant.findMany({
       where: { ownerId },
