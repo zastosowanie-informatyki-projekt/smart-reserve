@@ -116,12 +116,15 @@ const DecorationNode = ({
     label?: string | null;
   };
 }) => {
-  const isDoor = el.label === "DOOR";
-  const isWindow = el.label === "WINDOW";
-  const isWall = el.label === "WALL";
-  const fill = isDoor ? "#92400e" : isWindow ? "#bae6fd" : (el.fill ?? "#e2e8f0");
-  const stroke = isDoor ? "#78350f" : isWindow ? "#0284c7" : (el.stroke ?? "#94a3b8");
-  const textFill = isDoor ? "#fff7ed" : isWindow ? "#0c4a6e" : "#475569";
+  // Trust per-element fill/stroke (stored in the floor-plan JSON) so that
+  // renamed decorations keep their color. Fall back to sensible defaults
+  // for older data or custom decorations without colors.
+  const fill = el.fill ?? "#e2e8f0";
+  const stroke = el.stroke ?? "#94a3b8";
+  const isWall = el.shape === "line";
+  // Pick a legible text color: dark fills get light text, light fills get dark text.
+  const darkFills = new Set(["#92400e", "#334155"]);
+  const textFill = darkFills.has(fill) ? "#fff7ed" : "#0c4a6e";
 
   if (el.shape === "line") {
     return (
@@ -146,7 +149,7 @@ const DecorationNode = ({
         fill={fill}
         stroke={stroke}
         strokeWidth={1}
-        cornerRadius={isDoor ? 2 : 0}
+        cornerRadius={fill === "#92400e" ? 2 : 0}
       />
       {el.label && (
         <Text

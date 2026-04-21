@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, Phone, Mail, Globe } from "lucide-react";
+import { MapPin, Phone, Mail, Globe, Accessibility } from "lucide-react";
 import { CUISINE_LABEL } from "@/lib/cuisines";
 import type { CuisineType } from "@/app/generated/prisma/client";
 
@@ -24,6 +24,7 @@ export const RestaurantOverviewCard = ({
   email,
   website,
   cuisines,
+  hasDisabledFacilities,
   openingHours,
 }: {
   name: string;
@@ -35,6 +36,7 @@ export const RestaurantOverviewCard = ({
   email: string | null;
   website: string | null;
   cuisines: CuisineType[];
+  hasDisabledFacilities: boolean;
   openingHours: Array<{
     dayOfWeek: number;
     openTime: string;
@@ -51,13 +53,22 @@ export const RestaurantOverviewCard = ({
           <div className="space-y-5">
             <div className="space-y-3">
               <h1 className="text-3xl font-bold tracking-tight whitespace-nowrap">{name}</h1>
-              {cuisines.length > 0 && (
+              {(cuisines.length > 0 || hasDisabledFacilities) && (
                 <div className="flex flex-wrap gap-1.5">
                   {cuisines.map((cuisine) => (
                     <Badge key={cuisine} variant="secondary">
                       {CUISINE_LABEL[cuisine]}
                     </Badge>
                   ))}
+                  {hasDisabledFacilities && (
+                    <Badge
+                      variant="outline"
+                      className="gap-1 border-sky-600/40 bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300"
+                    >
+                      <Accessibility className="h-3 w-3" />
+                      Wheelchair accessible
+                    </Badge>
+                  )}
                 </div>
               )}
               {description && (

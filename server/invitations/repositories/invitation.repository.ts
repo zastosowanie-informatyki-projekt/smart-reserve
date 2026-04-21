@@ -2,8 +2,22 @@ import { prisma } from "@/lib/prisma";
 
 export const invitationRepository = {
   async create(data: { restaurantId: string; userId: string }) {
-    return prisma.employeeInvitation.create({
-      data,
+    // Upsert keyed on the (userId, restaurantId) unique index so that
+    // re-inviting someone whose previous invitation was accepted or
+    // declined resets the timestamps instead of hitting P2002.
+    return prisma.employeeInvitation.upsert({
+      where: {
+        userId_restaurantId: {
+          userId: data.userId,
+          restaurantId: data.restaurantId,
+        },
+      },
+      create: data,
+      update: {
+        acceptedAt: null,
+        declinedAt: null,
+        createdAt: new Date(),
+      },
       select: {
         id: true,
         userId: true,

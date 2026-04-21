@@ -18,6 +18,7 @@ export const restaurantRepository = {
         imageUrl: true,
         website: true,
         cuisines: true,
+        hasDisabledFacilities: true,
         ownerId: true,
         createdAt: true,
       },
@@ -41,6 +42,7 @@ export const restaurantRepository = {
         imageUrl: true,
         website: true,
         cuisines: true,
+        hasDisabledFacilities: true,
         ownerId: true,
         createdAt: true,
         updatedAt: true,
@@ -67,6 +69,7 @@ export const restaurantRepository = {
         imageUrl: true,
         website: true,
         cuisines: true,
+        hasDisabledFacilities: true,
         ownerId: true,
         createdAt: true,
         openingHours: {

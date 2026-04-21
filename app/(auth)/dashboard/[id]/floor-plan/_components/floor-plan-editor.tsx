@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Save, Loader2, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { saveFloorPlan } from "@/server/rooms/actions/save-floor-plan";
 import type { RoomWithFloorPlan } from "@/server/rooms/types";
@@ -164,23 +165,66 @@ export const FloorPlanEditor = ({
     [setCurrentElements],
   );
 
-  // Door / window placed via sidebar buttons — no Sheet needed
+  // Decorations placed via sidebar buttons — no Sheet needed
   const handleAddDecoration = useCallback(
     (preset: DecorationPreset) => {
-      const isDoor = preset === "door";
-      const isWall = preset === "wall";
+      const presetConfig: Record<
+        DecorationPreset,
+        {
+          width: number;
+          height: number;
+          shape: "rect" | "line";
+          fill: string;
+          stroke: string;
+          label: string;
+        }
+      > = {
+        door: {
+          width: 60,
+          height: 24,
+          shape: "rect",
+          fill: "#92400e",
+          stroke: "#78350f",
+          label: "DOOR",
+        },
+        window: {
+          width: 120,
+          height: 20,
+          shape: "rect",
+          fill: "#bae6fd",
+          stroke: "#0284c7",
+          label: "WINDOW",
+        },
+        wall: {
+          width: 200,
+          height: 12,
+          shape: "line",
+          fill: "#334155",
+          stroke: "#0f172a",
+          label: "WALL",
+        },
+        toilet: {
+          width: 60,
+          height: 40,
+          shape: "rect",
+          fill: "#e0f2fe",
+          stroke: "#0369a1",
+          label: "TOILET",
+        },
+      };
+      const cfg = presetConfig[preset];
       const newEl: LocalElement = {
         id: crypto.randomUUID(),
         type: "decoration",
-        x: Math.round(CANVAS_WIDTH / 2 / 20) * 20 - 40,
-        y: Math.round(CANVAS_HEIGHT / 2 / 20) * 20 - 20,
-        width: isWall ? 200 : isDoor ? 60 : 120,
-        height: isWall ? 12 : isDoor ? 24 : 20,
+        x: Math.round(CANVAS_WIDTH / 2 / 20) * 20 - Math.round(cfg.width / 2),
+        y: Math.round(CANVAS_HEIGHT / 2 / 20) * 20 - Math.round(cfg.height / 2),
+        width: cfg.width,
+        height: cfg.height,
         rotation: 0,
-        shape: isWall ? "line" : "rect",
-        fill: isWall ? "#334155" : isDoor ? "#92400e" : "#bae6fd",
-        stroke: isWall ? "#0f172a" : isDoor ? "#78350f" : "#0284c7",
-        label: isWall ? "WALL" : isDoor ? "DOOR" : "WINDOW",
+        shape: cfg.shape,
+        fill: cfg.fill,
+        stroke: cfg.stroke,
+        label: cfg.label,
       };
       setCurrentElements((prev) => [...prev, newEl]);
     },
@@ -388,19 +432,46 @@ export const FloorPlanEditor = ({
               : null;
 
             if (selectedEl?.type === "decoration") {
-              const label =
-                selectedEl.label === "DOOR"
+              // Detect kind from stored fill (stable even if user renamed the label).
+              const kind: "door" | "window" | "wall" | "toilet" | "other" =
+                selectedEl.fill === "#92400e"
+                  ? "door"
+                  : selectedEl.fill === "#bae6fd"
+                    ? "window"
+                    : selectedEl.fill === "#334155"
+                      ? "wall"
+                      : selectedEl.fill === "#e0f2fe"
+                        ? "toilet"
+                        : "other";
+              const kindName =
+                kind === "door"
                   ? "Door"
-                  : selectedEl.label === "WINDOW"
+                  : kind === "window"
                     ? "Window"
-                    : selectedEl.label === "WALL"
+                    : kind === "wall"
                       ? "Wall"
-                    : "Decoration";
+                      : kind === "toilet"
+                        ? "Toilet"
+                        : "Decoration";
+              const isEditableLabel = kind === "door" || kind === "window" || kind === "toilet";
               return (
                 <div className="mt-2 flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-1.5 text-xs">
                   <span className="text-muted-foreground">
-                    Selected: <span className="font-medium text-foreground">{label}</span>
+                    Selected: <span className="font-medium text-foreground">{kindName}</span>
                   </span>
+                  {isEditableLabel && (
+                    <>
+                      <span className="text-muted-foreground">Label:</span>
+                      <Input
+                        className="h-6 w-40 text-xs"
+                        value={selectedEl.label ?? ""}
+                        onChange={(e) =>
+                          handleElementChange(selectedEl.id, { label: e.target.value })
+                        }
+                        placeholder={kindName.toUpperCase()}
+                      />
+                    </>
+                  )}
                   <Button
                     variant="destructive"
                     size="sm"

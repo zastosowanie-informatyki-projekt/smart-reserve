@@ -384,6 +384,15 @@ export const RoomSelector = ({
           >
             + Wall
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="justify-start"
+            onClick={() => onAddDecoration("toilet")}
+            disabled={!activeRoomId}
+          >
+            + Toilet
+          </Button>
         </div>
       </div>
 

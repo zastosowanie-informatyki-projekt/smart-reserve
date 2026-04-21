@@ -169,12 +169,15 @@ const DecorationElement = ({
     }
   }, [isSelected, activeRef]);
 
-  // Door: brown fill; Window: light blue fill; fallback: slate
-  const isDoor = el.label === "DOOR";
-  const isWindow = el.label === "WINDOW";
-  const fill = isDoor ? "#92400e" : isWindow ? "#bae6fd" : (el.fill ?? "#e2e8f0");
-  const stroke = isDoor ? "#78350f" : isWindow ? "#0284c7" : (el.stroke ?? "#94a3b8");
+  // Trust the per-element fill/stroke (stored in the floor-plan JSON) so that
+  // renaming a door/window/toilet does not change its color.
+  const fill = el.fill ?? "#e2e8f0";
+  const stroke = el.stroke ?? "#94a3b8";
   const strokeWidth = isSelected ? 2 : 1;
+  // Door fill is dark brown — show the door with rounded corners and light text.
+  const isDoor = fill === "#92400e";
+  // Window fill is light sky-blue — show dark text for contrast.
+  const isWindow = fill === "#bae6fd";
 
   const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     onChange({ x: snapToGrid(e.target.x()), y: snapToGrid(e.target.y()) });

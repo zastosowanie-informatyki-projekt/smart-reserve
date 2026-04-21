@@ -20,6 +20,7 @@ export async function updateRestaurant(
     imageUrl: formData.get("imageUrl") || undefined,
     website: formData.get("website") || undefined,
     cuisines: formData.getAll("cuisines") as string[],
+    hasDisabledFacilities: formData.get("hasDisabledFacilities") === "on",
   });
 
   if (!parsed.success) {

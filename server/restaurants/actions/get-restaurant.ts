@@ -17,6 +17,7 @@ export async function getRestaurant(id: string): Promise<
     imageUrl: string | null;
     website: string | null;
     cuisines: CuisineType[];
+    hasDisabledFacilities: boolean;
     ownerId: string;
     createdAt: Date;
     openingHours: Array<{

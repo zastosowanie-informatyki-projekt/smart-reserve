@@ -39,6 +39,7 @@ interface EditRestaurantFormProps {
   email: string | null;
   website: string | null;
   cuisines: CuisineType[];
+  hasDisabledFacilities: boolean;
 }
 
 export const EditRestaurantForm = ({
@@ -215,6 +216,22 @@ export const EditRestaurantForm = ({
               defaultValue={restaurant.website ?? ""}
               placeholder="https://myrestaurant.com"
             />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              id="edit-hasDisabledFacilities"
+              name="hasDisabledFacilities"
+              type="checkbox"
+              defaultChecked={restaurant.hasDisabledFacilities}
+              className="h-4 w-4 rounded border-input accent-primary"
+            />
+            <Label
+              htmlFor="edit-hasDisabledFacilities"
+              className="cursor-pointer font-normal"
+            >
+              Wheelchair accessible (facilities for people with disabilities)
+            </Label>
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}

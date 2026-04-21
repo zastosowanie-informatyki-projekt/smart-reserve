@@ -123,6 +123,7 @@ model Restaurant {
   imageUrl     String?
   website      String?
   cuisines     CuisineType[]
+  hasDisabledFacilities Boolean @default(false)
   ownerId      String
   owner        User                 @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   rooms        Room[]

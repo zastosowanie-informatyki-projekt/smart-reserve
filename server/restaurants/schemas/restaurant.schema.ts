@@ -12,6 +12,7 @@ export const createRestaurantSchema = z.object({
   imageUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
   website: z.string().url("Invalid URL").optional().or(z.literal("")),
   cuisines: z.array(z.nativeEnum(CuisineType)).optional().default([]),
+  hasDisabledFacilities: z.boolean().optional().default(false),
 });
 
 export const updateRestaurantSchema = createRestaurantSchema.partial().extend({

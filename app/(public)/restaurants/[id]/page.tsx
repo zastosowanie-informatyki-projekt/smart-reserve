@@ -54,6 +54,7 @@ export default async function RestaurantDetailPage({
           email={restaurant.email}
           website={restaurant.website}
           cuisines={restaurant.cuisines}
+          hasDisabledFacilities={restaurant.hasDisabledFacilities}
           openingHours={restaurant.openingHours}
         />
 

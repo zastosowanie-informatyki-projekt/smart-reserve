@@ -100,6 +100,18 @@ export const CreateRestaurantForm = () => {
         <Input id="website" name="website" type="url" placeholder="https://myrestaurant.com" />
       </div>
 
+      <div className="flex items-center gap-2">
+        <input
+          id="hasDisabledFacilities"
+          name="hasDisabledFacilities"
+          type="checkbox"
+          className="h-4 w-4 rounded border-input accent-primary"
+        />
+        <Label htmlFor="hasDisabledFacilities" className="cursor-pointer font-normal">
+          Wheelchair accessible (facilities for people with disabilities)
+        </Label>
+      </div>
+
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <Button type="submit" disabled={isPending} className="w-fit">
