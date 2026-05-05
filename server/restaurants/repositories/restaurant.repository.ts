@@ -142,6 +142,15 @@ export const restaurantRepository = {
     });
   },
 
+  async findDistinctCities(): Promise<string[]> {
+    const rows = await prisma.restaurant.findMany({
+      distinct: ["city"],
+      select: { city: true },
+      orderBy: { city: "asc" },
+    });
+    return rows.map((r) => r.city);
+  },
+
   async findByOwnerId(ownerId: string) {
     return prisma.restaurant.findMany({
       where: { ownerId },
