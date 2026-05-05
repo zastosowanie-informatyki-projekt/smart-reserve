@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, isTextUIPart, type UIMessage } from "ai";
 import { Loader2, Sparkles, UtensilsCrossed } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -69,6 +69,15 @@ export const RestaurantAssistantChat = () => {
 
   const busy = status === "streaming" || status === "submitted";
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+  }, [open, messages, busy]);
+
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const text = draft.trim();
@@ -106,6 +115,7 @@ export const RestaurantAssistantChat = () => {
         </DialogHeader>
         <div className="flex min-h-0 flex-1 flex-col">
           <div
+            ref={scrollContainerRef}
             className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3"
             aria-busy={busy}
             aria-live="polite"
