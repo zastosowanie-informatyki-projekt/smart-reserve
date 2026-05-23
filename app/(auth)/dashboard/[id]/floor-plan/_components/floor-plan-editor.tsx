@@ -12,7 +12,14 @@ import type { RoomWithFloorPlan } from "@/server/rooms/types";
 import { FloorPlanCanvas } from "./floor-plan-canvas";
 import { RoomSelector } from "./room-selector";
 import { TableSheet } from "./table-sheet";
-import type { LocalElement, RoomEntry, EditorTool, DecorationPreset } from "./types";
+import type { LocalElement, RoomEntry, EditorTool, DecorationPreset, TableCapacityPreset, RoomShapePresetId } from "./types";
+import { DEFAULT_TABLE_PRESET, getTablePreset } from "./table-presets";
+import {
+  detectDecorationPreset,
+  decorationPresetToElementFields,
+  getDecorationPreset,
+} from "./decoration-presets";
+import { buildRoomShapeElements, isWallElement } from "./room-shape-presets";
 
 const CANVAS_WIDTH = 900;
 const CANVAS_HEIGHT = 600;
@@ -49,6 +56,7 @@ function roomWithFloorPlanToLocalElements(room: RoomWithFloorPlan): LocalElement
       fill: el.fill,
       stroke: el.stroke,
       label: el.label,
+      decorationPreset: detectDecorationPreset({ fill: el.fill, shape: el.shape }) ?? undefined,
     };
   });
 }
@@ -82,6 +90,7 @@ export const FloorPlanEditor = ({
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeTool, setActiveTool] = useState<EditorTool>("select");
+  const [tablePreset, setTablePreset] = useState<TableCapacityPreset>(DEFAULT_TABLE_PRESET);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, startSaveTransition] = useTransition();
@@ -153,8 +162,22 @@ export const FloorPlanEditor = ({
       setCurrentElements((prev) =>
         prev.map((el) => (el.id === id ? { ...el, ...updated } : el)),
       );
+      setSheetElement((prev) => (prev?.id === id ? { ...prev, ...updated } : prev));
     },
     [setCurrentElements],
+  );
+
+  const handleApplyTablePreset = useCallback(
+    (elementId: string, presetCapacity: TableCapacityPreset) => {
+      const preset = getTablePreset(presetCapacity);
+      handleElementChange(elementId, {
+        width: preset.width,
+        height: preset.height,
+        shape: preset.shape,
+        tableCapacity: preset.capacity,
+      });
+    },
+    [handleElementChange],
   );
 
   const handleDeleteElement = useCallback(
@@ -167,66 +190,59 @@ export const FloorPlanEditor = ({
 
   // Decorations placed via sidebar buttons — no Sheet needed
   const handleAddDecoration = useCallback(
-    (preset: DecorationPreset) => {
-      const presetConfig: Record<
-        DecorationPreset,
-        {
-          width: number;
-          height: number;
-          shape: "rect" | "line";
-          fill: string;
-          stroke: string;
-          label: string;
-        }
-      > = {
-        door: {
-          width: 60,
-          height: 24,
-          shape: "rect",
-          fill: "#92400e",
-          stroke: "#78350f",
-          label: "DOOR",
-        },
-        window: {
-          width: 120,
-          height: 20,
-          shape: "rect",
-          fill: "#bae6fd",
-          stroke: "#0284c7",
-          label: "WINDOW",
-        },
-        wall: {
-          width: 200,
-          height: 12,
-          shape: "line",
-          fill: "#334155",
-          stroke: "#0f172a",
-          label: "WALL",
-        },
-        toilet: {
-          width: 60,
-          height: 40,
-          shape: "rect",
-          fill: "#e0f2fe",
-          stroke: "#0369a1",
-          label: "TOILET",
-        },
-      };
-      const cfg = presetConfig[preset];
+    (presetId: DecorationPreset) => {
+      const preset = getDecorationPreset(presetId);
+      const fields = decorationPresetToElementFields(preset);
       const newEl: LocalElement = {
         id: crypto.randomUUID(),
         type: "decoration",
-        x: Math.round(CANVAS_WIDTH / 2 / 20) * 20 - Math.round(cfg.width / 2),
-        y: Math.round(CANVAS_HEIGHT / 2 / 20) * 20 - Math.round(cfg.height / 2),
-        width: cfg.width,
-        height: cfg.height,
+        x: Math.round(CANVAS_WIDTH / 2 / 20) * 20 - Math.round(fields.width / 2),
+        y: Math.round(CANVAS_HEIGHT / 2 / 20) * 20 - Math.round(fields.height / 2),
         rotation: 0,
-        shape: cfg.shape,
-        fill: cfg.fill,
-        stroke: cfg.stroke,
-        label: cfg.label,
+        ...fields,
       };
       setCurrentElements((prev) => [...prev, newEl]);
+      setSelectedId(newEl.id);
+    },
+    [setCurrentElements],
+  );
+
+  const handleApplyDecorationPreset = useCallback(
+    (elementId: string, presetId: DecorationPreset) => {
+      const preset = getDecorationPreset(presetId);
+      handleElementChange(elementId, {
+        width: preset.width,
+        height: preset.height,
+        shape: preset.shape,
+        fill: preset.fill,
+        stroke: preset.stroke,
+        decorationPreset: preset.id,
+      });
+    },
+    [handleElementChange],
+  );
+
+  const handleWallDrawComplete = useCallback(() => {
+    setActiveTool("select");
+  }, []);
+
+  const handleAddWall = useCallback(
+    (el: LocalElement) => {
+      setCurrentElements((prev) => [...prev, el]);
+      setSelectedId(null);
+    },
+    [setCurrentElements],
+  );
+
+  const handleApplyRoomShape = useCallback(
+    (shapeId: RoomShapePresetId) => {
+      const wallElements = buildRoomShapeElements(shapeId);
+      setCurrentElements((prev) => [
+        ...prev.filter((el) => !isWallElement(el)),
+        ...wallElements,
+      ]);
+      setSelectedId(null);
+      setActiveTool("select");
     },
     [setCurrentElements],
   );
@@ -406,7 +422,11 @@ export const FloorPlanEditor = ({
             elements={currentElements}
             activeTool={activeTool}
             onToolChange={handleToolChange}
+            tablePreset={tablePreset}
+            onTablePresetChange={setTablePreset}
             onAddDecoration={handleAddDecoration}
+            onApplyRoomShape={handleApplyRoomShape}
+            onFinishWallDraw={handleWallDrawComplete}
           />
         </div>
 
@@ -417,9 +437,12 @@ export const FloorPlanEditor = ({
               elements={currentElements}
               selectedId={selectedId}
               activeTool={activeTool}
+              tablePreset={tablePreset}
               onSelect={handleSelectElement}
               onElementChange={handleElementChange}
               onAddElement={handleAddElement}
+              onAddWall={handleAddWall}
+              onWallDrawComplete={handleWallDrawComplete}
             />
           ) : (
             <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
@@ -432,33 +455,40 @@ export const FloorPlanEditor = ({
               : null;
 
             if (selectedEl?.type === "decoration") {
-              // Detect kind from stored fill (stable even if user renamed the label).
-              const kind: "door" | "window" | "wall" | "toilet" | "other" =
-                selectedEl.fill === "#92400e"
-                  ? "door"
-                  : selectedEl.fill === "#bae6fd"
-                    ? "window"
-                    : selectedEl.fill === "#334155"
-                      ? "wall"
-                      : selectedEl.fill === "#e0f2fe"
-                        ? "toilet"
-                        : "other";
-              const kindName =
-                kind === "door"
-                  ? "Door"
-                  : kind === "window"
-                    ? "Window"
-                    : kind === "wall"
-                      ? "Wall"
-                      : kind === "toilet"
-                        ? "Toilet"
-                        : "Decoration";
-              const isEditableLabel = kind === "door" || kind === "window" || kind === "toilet";
+              const presetId =
+                selectedEl.decorationPreset ??
+                detectDecorationPreset({ fill: selectedEl.fill, shape: selectedEl.shape });
+              const preset = presetId ? getDecorationPreset(presetId) : null;
+              const isWall = selectedEl.shape === "line" || preset?.id === "wall";
+              const kindName = isWall ? "Wall" : (preset?.label ?? "Decoration");
+              const isEditableLabel = !isWall && (preset?.editableLabel ?? Boolean(selectedEl.label));
+
               return (
-                <div className="mt-2 flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-1.5 text-xs">
+                <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-xs">
                   <span className="text-muted-foreground">
                     Selected: <span className="font-medium text-foreground">{kindName}</span>
                   </span>
+                  <span className="text-muted-foreground">
+                    {isWall ? "Length" : "Size"}:{" "}
+                    <span className="font-medium text-foreground">
+                      {isWall ? `${selectedEl.width} px` : `${selectedEl.width}×${selectedEl.height}`}
+                    </span>
+                  </span>
+                  {preset && !isWall && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => handleApplyDecorationPreset(selectedEl.id, preset.id)}
+                    >
+                      Reset to preset ({preset.sizeHint})
+                    </Button>
+                  )}
+                  {isWall && (
+                    <span className="text-muted-foreground">
+                      Drag to move · handles to resize or rotate
+                    </span>
+                  )}
                   {isEditableLabel && (
                     <>
                       <span className="text-muted-foreground">Label:</span>
@@ -488,8 +518,10 @@ export const FloorPlanEditor = ({
             return (
               <p className="mt-2 text-xs text-muted-foreground">
                 {activeTool === "select"
-                  ? "Click a table to edit it. Drag to move. Use handles to resize or rotate."
-                  : "Click on the canvas to place a new table."}
+                  ? "Click an element to select it. Drag to move, use handles to resize or rotate. Scroll to zoom, hold Space and drag to pan."
+                  : activeTool === "draw-wall"
+                    ? "Click to place wall corners. Esc, double-click, or Done to finish — then edit walls in Select mode."
+                    : "Choose a table size, then click on the canvas to place it."}
               </p>
             );
           })()}
@@ -509,6 +541,7 @@ export const FloorPlanEditor = ({
           onUpdated={handleSheetUpdated}
           onCancelNew={handleSheetCancelNew}
           onDeleted={handleSheetDeleted}
+          onApplyPreset={handleApplyTablePreset}
         />
       )}
     </div>

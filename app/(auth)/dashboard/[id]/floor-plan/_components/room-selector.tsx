@@ -16,7 +16,10 @@ import { DoorOpen, Pencil, Trash2, Check, X, Plus, Loader2 } from "lucide-react"
 import { createRoom } from "@/server/rooms/actions/create-room";
 import { updateRoom } from "@/server/rooms/actions/update-room";
 import { deleteRoom } from "@/server/rooms/actions/delete-room";
-import type { RoomEntry, LocalElement, EditorTool, DecorationPreset } from "./types";
+import type { RoomEntry, LocalElement, EditorTool, DecorationPreset, TableCapacityPreset, RoomShapePresetId } from "./types";
+import { TABLE_PRESETS } from "./table-presets";
+import { DECORATION_PRESETS } from "./decoration-presets";
+import { ROOM_SHAPE_PRESETS, countWallElements } from "./room-shape-presets";
 import { cn } from "@/lib/utils";
 
 interface RoomSelectorProps {
@@ -29,7 +32,11 @@ interface RoomSelectorProps {
   elements: LocalElement[];
   activeTool: EditorTool;
   onToolChange: (tool: EditorTool) => void;
+  tablePreset: TableCapacityPreset;
+  onTablePresetChange: (preset: TableCapacityPreset) => void;
   onAddDecoration: (preset: DecorationPreset) => void;
+  onApplyRoomShape: (shapeId: RoomShapePresetId) => void;
+  onFinishWallDraw: () => void;
 }
 
 export const RoomSelector = ({
@@ -42,9 +49,14 @@ export const RoomSelector = ({
   elements,
   activeTool,
   onToolChange,
+  tablePreset,
+  onTablePresetChange,
   onAddDecoration,
+  onApplyRoomShape,
+  onFinishWallDraw,
 }: RoomSelectorProps) => {
   const placedCount = elements.filter((e) => e.type === "table").length;
+  const wallCount = countWallElements(elements);
 
   const [isPending, startTransition] = useTransition();
 
@@ -65,6 +77,22 @@ export const RoomSelector = ({
     upcomingCount: number;
   } | null>(null);
   const [isForceDeleting, startForceDeleteTransition] = useTransition();
+
+  // Confirm replace-walls dialog state
+  const [pendingRoomShape, setPendingRoomShape] = useState<RoomShapePresetId | null>(null);
+
+  const applyRoomShape = (shapeId: RoomShapePresetId) => {
+    onApplyRoomShape(shapeId);
+    setPendingRoomShape(null);
+  };
+
+  const handleRoomShapeClick = (shapeId: RoomShapePresetId) => {
+    if (wallCount > 0) {
+      setPendingRoomShape(shapeId);
+      return;
+    }
+    applyRoomShape(shapeId);
+  };
 
   // ── Rename ────────────────────────────────────────────────────────────────
 
@@ -325,6 +353,35 @@ export const RoomSelector = ({
         )}
       </div>
 
+      {/* Room outline */}
+      <div>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Room outline
+        </p>
+        <div className="flex flex-col gap-1">
+          {ROOM_SHAPE_PRESETS.map((shape) => (
+            <Button
+              key={shape.id}
+              variant="outline"
+              size="sm"
+              className="h-auto justify-start py-1.5"
+              onClick={() => handleRoomShapeClick(shape.id)}
+              disabled={!activeRoomId}
+            >
+              <span className="flex flex-col items-start gap-0.5">
+                <span>{shape.label}</span>
+                <span className="text-[10px] font-normal opacity-70">{shape.description}</span>
+              </span>
+            </Button>
+          ))}
+        </div>
+        {activeRoomId && (
+          <p className="mt-1.5 text-[10px] text-muted-foreground">
+            Applies wall outline. Tables and other elements are kept.
+          </p>
+        )}
+      </div>
+
       {/* Tools */}
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -348,7 +405,38 @@ export const RoomSelector = ({
           >
             Place Table
           </Button>
+          <Button
+            variant={activeTool === "draw-wall" ? "default" : "outline"}
+            size="sm"
+            className="justify-start"
+            onClick={() => onToolChange("draw-wall")}
+            disabled={!activeRoomId}
+          >
+            Draw Walls
+          </Button>
         </div>
+
+        {activeTool === "add-table" && (
+          <div className="mt-2 flex flex-col gap-1">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Table size
+            </p>
+            {TABLE_PRESETS.map((preset) => (
+              <Button
+                key={preset.capacity}
+                variant={tablePreset === preset.capacity ? "default" : "outline"}
+                size="sm"
+                className="h-auto justify-start py-1.5"
+                onClick={() => onTablePresetChange(preset.capacity)}
+              >
+                <span className="flex flex-col items-start gap-0.5">
+                  <span>{preset.label}</span>
+                  <span className="text-[10px] font-normal opacity-70">{preset.sizeHint}</span>
+                </span>
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Decorations */}
@@ -357,49 +445,39 @@ export const RoomSelector = ({
           Add Element
         </p>
         <div className="flex flex-col gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            className="justify-start"
-            onClick={() => onAddDecoration("door")}
-            disabled={!activeRoomId}
-          >
-            + Door
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="justify-start"
-            onClick={() => onAddDecoration("window")}
-            disabled={!activeRoomId}
-          >
-            + Window
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="justify-start"
-            onClick={() => onAddDecoration("wall")}
-            disabled={!activeRoomId}
-          >
-            + Wall
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="justify-start"
-            onClick={() => onAddDecoration("toilet")}
-            disabled={!activeRoomId}
-          >
-            + Toilet
-          </Button>
+          {DECORATION_PRESETS.map((preset) => (
+            <Button
+              key={preset.id}
+              variant="outline"
+              size="sm"
+              className="h-auto justify-start py-1.5"
+              onClick={() => onAddDecoration(preset.id)}
+              disabled={!activeRoomId}
+            >
+              <span className="flex flex-col items-start gap-0.5">
+                <span>+ {preset.label}</span>
+                <span className="text-[10px] font-normal opacity-70">{preset.sizeHint}</span>
+              </span>
+            </Button>
+          ))}
         </div>
       </div>
 
       {activeTool === "add-table" && (
         <p className="rounded-md bg-primary/10 px-3 py-2 text-xs text-primary">
-          Click anywhere on the canvas to place a new table.
+          Choose a table size, then click on the canvas to place it.
         </p>
+      )}
+
+      {activeTool === "draw-wall" && (
+        <div className="flex flex-col gap-2">
+          <p className="rounded-md bg-primary/10 px-3 py-2 text-xs text-primary">
+            Click corner to corner. Walls snap to grid and 45° angles.
+          </p>
+          <Button variant="secondary" size="sm" onClick={onFinishWallDraw}>
+            Done drawing
+          </Button>
+        </div>
       )}
 
       {/* Confirm-delete dialog — shown when room has upcoming reservations */}
@@ -429,6 +507,36 @@ export const RoomSelector = ({
             >
               {isForceDeleting && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
               Delete anyway
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm replace-walls dialog */}
+      <Dialog
+        open={!!pendingRoomShape}
+        onOpenChange={(open) => {
+          if (!open) setPendingRoomShape(null);
+        }}
+      >
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Replace existing walls?</DialogTitle>
+            <DialogDescription>
+              This room already has {wallCount} wall {wallCount === 1 ? "segment" : "segments"}.
+              Applying a new outline will replace them. Tables and other elements stay in place.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingRoomShape(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (pendingRoomShape) applyRoomShape(pendingRoomShape);
+              }}
+            >
+              Replace walls
             </Button>
           </DialogFooter>
         </DialogContent>

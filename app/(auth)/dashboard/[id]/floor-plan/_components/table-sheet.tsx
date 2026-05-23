@@ -18,7 +18,12 @@ import {
 import { createTable } from "@/server/tables/actions/create-table";
 import { updateTable } from "@/server/tables/actions/update-table";
 import { deleteTable } from "@/server/tables/actions/delete-table";
-import type { LocalElement } from "./types";
+import type { LocalElement, TableCapacityPreset } from "./types";
+import {
+  TABLE_PRESETS,
+  findClosestTablePreset,
+  getTablePreset,
+} from "./table-presets";
 
 interface TableSheetProps {
   open: boolean;
@@ -50,6 +55,8 @@ interface TableSheetProps {
   onCancelNew: (elementId: string) => void;
   /** Called after a successful deleteTable */
   onDeleted: (elementId: string) => void;
+  /** Applies preset dimensions on the canvas element (user can still resize manually) */
+  onApplyPreset: (elementId: string, preset: TableCapacityPreset) => void;
 }
 
 export const TableSheet = ({
@@ -62,6 +69,7 @@ export const TableSheet = ({
   onUpdated,
   onCancelNew,
   onDeleted,
+  onApplyPreset,
 }: TableSheetProps) => {
   const [label, setLabel] = useState(element?.tableLabel ?? "");
   const [capacity, setCapacity] = useState(
@@ -70,6 +78,9 @@ export const TableSheet = ({
   const [description, setDescription] = useState(element?.tableDescription ?? "");
   const [shape, setShape] = useState<"rect" | "circle">(
     (element?.shape as "rect" | "circle") ?? "rect",
+  );
+  const [activePreset, setActivePreset] = useState<TableCapacityPreset>(() =>
+    findClosestTablePreset(element?.tableCapacity ?? 4),
   );
   const [error, setError] = useState<string | null>(null);
 
@@ -82,6 +93,7 @@ export const TableSheet = ({
     setCapacity(el?.tableCapacity ? String(el.tableCapacity) : "");
     setDescription(el?.tableDescription ?? "");
     setShape((el?.shape as "rect" | "circle") ?? "rect");
+    setActivePreset(findClosestTablePreset(el?.tableCapacity ?? 4));
     setError(null);
   };
 
@@ -157,6 +169,22 @@ export const TableSheet = ({
     }
   };
 
+  const handlePresetSelect = (presetCapacity: TableCapacityPreset) => {
+    if (!element) return;
+    const preset = getTablePreset(presetCapacity);
+    setActivePreset(presetCapacity);
+    setCapacity(String(preset.capacity));
+    setShape(preset.shape);
+    onApplyPreset(element.id, presetCapacity);
+  };
+
+  const handleCapacityChange = (value: string) => {
+    setCapacity(value);
+    const capacityNum = Number(value);
+    if (!value || isNaN(capacityNum)) return;
+    setActivePreset(findClosestTablePreset(capacityNum));
+  };
+
   const handleDelete = () => {
     if (!element?.tableId) return;
     startDeleteTransition(async () => {
@@ -189,6 +217,29 @@ export const TableSheet = ({
         </SheetHeader>
 
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4">
+          {/* Size preset */}
+          <div className="flex flex-col gap-1.5">
+            <Label>Size preset</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {TABLE_PRESETS.map((preset) => (
+                <Button
+                  key={preset.capacity}
+                  type="button"
+                  variant={activePreset === preset.capacity ? "default" : "outline"}
+                  size="sm"
+                  className="h-auto flex-col gap-0.5 py-2"
+                  onClick={() => handlePresetSelect(preset.capacity)}
+                >
+                  <span className="text-xs font-semibold">{preset.capacity}</span>
+                  <span className="text-[10px] font-normal opacity-70">seats</span>
+                </Button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Presets set default size on the canvas. You can still resize manually.
+            </p>
+          </div>
+
           {/* Label */}
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="table-label">Label</Label>
@@ -209,7 +260,7 @@ export const TableSheet = ({
               min={1}
               placeholder="4"
               value={capacity}
-              onChange={(e) => setCapacity(e.target.value)}
+              onChange={(e) => handleCapacityChange(e.target.value)}
             />
           </div>
 

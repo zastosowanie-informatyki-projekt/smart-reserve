@@ -15,6 +15,7 @@ export interface LocalElement {
   fill?: string;
   stroke?: string;
   label?: string;
+  decorationPreset?: DecorationPreset;
   // enriched / local-only data (not saved to DB directly)
   tableLabel?: string;
   tableCapacity?: number;
@@ -35,5 +36,8 @@ export interface RoomEntry {
   }>;
 }
 
-export type EditorTool = "select" | "add-table";
+export type EditorTool = "select" | "add-table" | "draw-wall";
 export type DecorationPreset = "door" | "window" | "wall" | "toilet";
+export type RoomShapePresetId = "rectangle" | "square" | "l-shape";
+
+export type { TableCapacityPreset } from "./table-presets";

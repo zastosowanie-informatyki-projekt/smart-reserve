@@ -114,9 +114,13 @@ export const restaurantRepository = {
     });
   },
 
-  /** Assistant chat: optional city substring and/or any-of cuisine tags (OR within tags). */
-  async findManyForChat(filters: { cityContains?: string; cuisineTags?: CuisineType[] }) {
-    const { cityContains, cuisineTags } = filters;
+  /** Assistant chat: optional city, cuisine tags, and/or accessibility filter. */
+  async findManyForChat(filters: {
+    cityContains?: string;
+    cuisineTags?: CuisineType[];
+    wheelchairAccessible?: boolean;
+  }) {
+    const { cityContains, cuisineTags, wheelchairAccessible } = filters;
     const hasTags = cuisineTags != null && cuisineTags.length > 0;
     return prisma.restaurant.findMany({
       where: {
@@ -126,6 +130,9 @@ export const restaurantRepository = {
         ...(hasTags && {
           cuisines: { hasSome: cuisineTags },
         }),
+        ...(wheelchairAccessible !== undefined && {
+          hasDisabledFacilities: wheelchairAccessible,
+        }),
       },
       select: {
         id: true,
@@ -134,8 +141,21 @@ export const restaurantRepository = {
         street: true,
         buildingNumber: true,
         city: true,
+        phone: true,
+        email: true,
+        website: true,
         cuisines: true,
+        hasDisabledFacilities: true,
         imageUrl: true,
+        openingHours: {
+          select: {
+            dayOfWeek: true,
+            openTime: true,
+            closeTime: true,
+            isClosed: true,
+          },
+          orderBy: { dayOfWeek: "asc" },
+        },
       },
       orderBy: { createdAt: "desc" },
       take: 40,

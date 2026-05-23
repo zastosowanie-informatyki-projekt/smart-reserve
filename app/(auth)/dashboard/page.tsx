@@ -10,12 +10,18 @@ import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
 import { RestaurantOwnerCard } from "./_components/restaurant-owner-card";
 import { DashboardSectionsSkeleton } from "./_components/dashboard-sections-skeleton";
+import { DashboardEmptyState } from "./_components/dashboard-empty-state";
 
 export const metadata = {
   title: "Dashboard | TableSpot",
 };
 
 const DashboardSections = async () => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  const isOwner = session?.user.role === "RESTAURANT_OWNER";
+
   const [ownedResult, employeeResult] = await Promise.all([
     getMyRestaurants(),
     getMyEmployeeRestaurants(),
@@ -27,11 +33,7 @@ const DashboardSections = async () => {
     : [];
 
   if (restaurants.length === 0 && employeeList.length === 0) {
-    return (
-      <div className="py-12 text-center text-muted-foreground">
-        You haven&apos;t created any restaurants yet.
-      </div>
-    );
+    return <DashboardEmptyState isOwner={isOwner} />;
   }
 
   return (

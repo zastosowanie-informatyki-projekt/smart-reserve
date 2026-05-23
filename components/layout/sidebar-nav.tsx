@@ -78,6 +78,8 @@ export const SidebarNav = async () => {
     headers: await headers(),
   });
 
+  const isRestaurantOwner = session?.user.role === "RESTAURANT_OWNER";
+
   let hasRestaurants = false;
   if (session) {
     const [ownedResult, employeeResult] = await Promise.all([getMyRestaurants(), getMyEmployeeRestaurants()]);
@@ -91,7 +93,7 @@ export const SidebarNav = async () => {
   if (session) {
     navItems.push({ href: "/reservations", label: "My Reservations", icon: "calendar" });
     navItems.push({ href: "/invitations", label: "Invitations", icon: "mail" });
-    if (hasRestaurants) {
+    if (hasRestaurants || isRestaurantOwner) {
       navItems.push({ href: "/dashboard", label: "My Restaurants", icon: "dashboard" });
     }
   }
