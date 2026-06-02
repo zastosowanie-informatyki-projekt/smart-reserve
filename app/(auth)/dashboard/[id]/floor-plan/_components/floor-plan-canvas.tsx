@@ -28,6 +28,12 @@ const GRID_MAJOR_EVERY = 5;
 const ROTATION_SNAP_STEP = 45;
 const ROTATION_SNAPS = [0, 45, 90, 135, 180, 225, 270, 315];
 
+function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  const tag = target.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
+}
+
 function snapRotation(value: number): number {
   const snapped = Math.round(value / ROTATION_SNAP_STEP) * ROTATION_SNAP_STEP;
   const normalized = ((snapped % 360) + 360) % 360;
@@ -407,6 +413,15 @@ export const FloorPlanCanvas = ({
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
   const [showGrid, setShowGrid] = useState(true);
   const [spacePressed, setSpacePressed] = useState(false);
+  const [prevActiveTool, setPrevActiveTool] = useState(activeTool);
+
+  if (activeTool !== prevActiveTool) {
+    setPrevActiveTool(activeTool);
+    if (activeTool !== "draw-wall") {
+      setWallDrawStart(null);
+      setWallDrawPreviewEnd(null);
+    }
+  }
 
   const interactive = activeTool === "select" && !spacePressed;
   const fitScale = stageSize.width / CANVAS_WIDTH;
@@ -434,14 +449,9 @@ export const FloorPlanCanvas = ({
   }, [onWallDrawComplete]);
 
   useEffect(() => {
-    if (activeTool !== "draw-wall") {
-      setWallDrawStart(null);
-      setWallDrawPreviewEnd(null);
-    }
-  }, [activeTool]);
-
-  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (isTypingTarget(event.target)) return;
+
       if (event.code === "Space" && activeTool === "select") {
         event.preventDefault();
         setSpacePressed(true);
@@ -451,6 +461,8 @@ export const FloorPlanCanvas = ({
       }
     };
     const handleKeyUp = (event: KeyboardEvent) => {
+      if (isTypingTarget(event.target)) return;
+
       if (event.code === "Space") {
         setSpacePressed(false);
       }

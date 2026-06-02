@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useTransition } from "react";
+import { useState, useCallback, useTransition, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -12,7 +12,14 @@ import type { RoomWithFloorPlan } from "@/server/rooms/types";
 import { FloorPlanCanvas } from "./floor-plan-canvas";
 import { RoomSelector } from "./room-selector";
 import { TableSheet } from "./table-sheet";
-import type { LocalElement, RoomEntry, EditorTool, DecorationPreset, TableCapacityPreset, RoomShapePresetId } from "./types";
+import type {
+  LocalElement,
+  RoomEntry,
+  EditorTool,
+  DecorationPreset,
+  TableCapacityPreset,
+  RoomShapePresetId,
+} from "./types";
 import { DEFAULT_TABLE_PRESET, getTablePreset } from "./table-presets";
 import {
   detectDecorationPreset,
@@ -20,9 +27,12 @@ import {
   getDecorationPreset,
 } from "./decoration-presets";
 import { buildRoomShapeElements, isWallElement } from "./room-shape-presets";
+import { FloorPlanCopilotChat } from "./floor-plan-copilot-chat";
+import type { FloorPlanCopilotContext } from "@/lib/floor-plan-copilot/types";
 
 const CANVAS_WIDTH = 900;
 const CANVAS_HEIGHT = 600;
+const EMPTY_ELEMENTS: LocalElement[] = [];
 
 function roomWithFloorPlanToLocalElements(room: RoomWithFloorPlan): LocalElement[] {
   if (!room.floorPlan) return [];
@@ -100,8 +110,10 @@ export const FloorPlanEditor = ({
   const [sheetElement, setSheetElement] = useState<LocalElement | null>(null);
   const [isNewElement, setIsNewElement] = useState(false);
 
-  const currentElements: LocalElement[] =
-    activeRoomId ? (roomElements.get(activeRoomId) ?? []) : [];
+  const currentElements = useMemo(
+    () => (activeRoomId ? (roomElements.get(activeRoomId) ?? EMPTY_ELEMENTS) : EMPTY_ELEMENTS),
+    [activeRoomId, roomElements],
+  );
 
   const setCurrentElements = useCallback(
     (updater: (prev: LocalElement[]) => LocalElement[]) => {
@@ -159,9 +171,7 @@ export const FloorPlanEditor = ({
 
   const handleElementChange = useCallback(
     (id: string, updated: Partial<LocalElement>) => {
-      setCurrentElements((prev) =>
-        prev.map((el) => (el.id === id ? { ...el, ...updated } : el)),
-      );
+      setCurrentElements((prev) => prev.map((el) => (el.id === id ? { ...el, ...updated } : el)));
       setSheetElement((prev) => (prev?.id === id ? { ...prev, ...updated } : prev));
     },
     [setCurrentElements],
@@ -237,10 +247,7 @@ export const FloorPlanEditor = ({
   const handleApplyRoomShape = useCallback(
     (shapeId: RoomShapePresetId) => {
       const wallElements = buildRoomShapeElements(shapeId);
-      setCurrentElements((prev) => [
-        ...prev.filter((el) => !isWallElement(el)),
-        ...wallElements,
-      ]);
+      setCurrentElements((prev) => [...prev.filter((el) => !isWallElement(el)), ...wallElements]);
       setSelectedId(null);
       setActiveTool("select");
     },
@@ -370,6 +377,35 @@ export const FloorPlanEditor = ({
 
   const activeRoom = rooms.find((r) => r.id === activeRoomId);
 
+  const currentElementsRef = useRef(currentElements);
+  useEffect(() => {
+    currentElementsRef.current = currentElements;
+  }, [currentElements]);
+
+  const getCurrentElements = useCallback(() => currentElementsRef.current, []);
+
+  const buildCopilotContext = useCallback((): FloorPlanCopilotContext | null => {
+    if (!activeRoomId || !activeRoom) return null;
+
+    return {
+      activeRoomId,
+      roomName: activeRoom.name,
+      canvasWidth: CANVAS_WIDTH,
+      canvasHeight: CANVAS_HEIGHT,
+      elements: currentElements.map((el) => ({
+        type: el.type,
+        x: el.x,
+        y: el.y,
+        width: el.width,
+        height: el.height,
+        capacity: el.tableCapacity,
+        decorationPreset: el.decorationPreset,
+        shape: el.shape,
+        label: el.label ?? el.tableLabel,
+      })),
+    };
+  }, [activeRoomId, activeRoom, currentElements]);
+
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       {/* Header */}
@@ -402,7 +438,7 @@ export const FloorPlanEditor = ({
         </div>
       </div>
 
-      {/* Body — 2-panel layout */}
+      {/* Body — sidebar + canvas + copilot */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left sidebar */}
         <div className="w-56 shrink-0 overflow-y-auto border-r p-3">
@@ -450,9 +486,7 @@ export const FloorPlanEditor = ({
             </div>
           )}
           {(() => {
-            const selectedEl = selectedId
-              ? currentElements.find((e) => e.id === selectedId)
-              : null;
+            const selectedEl = selectedId ? currentElements.find((e) => e.id === selectedId) : null;
 
             if (selectedEl?.type === "decoration") {
               const presetId =
@@ -485,9 +519,7 @@ export const FloorPlanEditor = ({
                     </Button>
                   )}
                   {isWall && (
-                    <span className="text-muted-foreground">
-                      Drag to move · handles to resize or rotate
-                    </span>
+                    <span className="text-muted-foreground">Drag to move · handles to resize or rotate</span>
                   )}
                   {isEditableLabel && (
                     <>
@@ -495,9 +527,7 @@ export const FloorPlanEditor = ({
                       <Input
                         className="h-6 w-40 text-xs"
                         value={selectedEl.label ?? ""}
-                        onChange={(e) =>
-                          handleElementChange(selectedEl.id, { label: e.target.value })
-                        }
+                        onChange={(e) => handleElementChange(selectedEl.id, { label: e.target.value })}
                         placeholder={kindName.toUpperCase()}
                       />
                     </>
@@ -525,6 +555,16 @@ export const FloorPlanEditor = ({
               </p>
             );
           })()}
+        </div>
+
+        <div className="flex w-72 shrink-0 border-l max-lg:hidden">
+          <FloorPlanCopilotChat
+            restaurantId={restaurantId}
+            activeRoomId={activeRoomId}
+            buildContext={buildCopilotContext}
+            setCurrentElements={setCurrentElements}
+            getCurrentElements={getCurrentElements}
+          />
         </div>
       </div>
 
